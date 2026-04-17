@@ -1,0 +1,20 @@
+# Build outputs
+**/bin/
+**/obj/
+
+# Test results
+**/TestResults/
+**/*.trx
+**/*.coverage
+
+# NuGet
+**/.nuget/
+**/packages/
+
+# IDE
+**/.vs/
+**/*.user
+**/*.suo
+
+# Logs
+**/*.log

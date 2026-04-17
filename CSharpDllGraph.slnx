@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CSharpDllGraph.Cli/CSharpDllGraph.Cli.csproj" />
+    <Project Path="src/CSharpDllGraph.Engine/CSharpDllGraph.Engine.csproj" />
+    <Project Path="src/CSharpDllGraph.Mcp/CSharpDllGraph.Mcp.csproj" />
+    <Project Path="src/CSharpDllGraph.Providers.Dotnet/CSharpDllGraph.Providers.Dotnet.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CSharpDllGraph.Cli.Tests/CSharpDllGraph.Cli.Tests.csproj" />
+    <Project Path="tests/CSharpDllGraph.Engine.Tests/CSharpDllGraph.Engine.Tests.csproj" />
+    <Project Path="tests/CSharpDllGraph.Mcp.Tests/CSharpDllGraph.Mcp.Tests.csproj" />
+    <Project Path="tests/CSharpDllGraph.Providers.Dotnet.Tests/CSharpDllGraph.Providers.Dotnet.Tests.csproj" />
+  </Folder>
+</Solution>
