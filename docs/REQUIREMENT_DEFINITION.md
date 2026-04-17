@@ -23,12 +23,13 @@
 
 | Status | Wymaganie |
 |---|---|
-| `[ ]` | Zdefiniowany schemat węzłów: `Package`, `Assembly`, `Type`, `Method` |
-| `[ ]` | Zdefiniowany schemat krawędzi: `DependsOn`, `Contains`, `Calls`, `Implements` |
-| `[ ]` | Klucze węzłów są wersjonowane i deterministyczne |
-| `[ ]` | Graf serializuje się do JSON i deserializuje z byte-equality |
-| `[ ]` | Test round-trip udowadnia byte-equality na grafie syntetycznym |
-| `[ ]` | JSON store obsługuje operacje: zapis, odczyt, scalanie przyrostowe |
+| `[x]` | Zdefiniowany schemat węzłów: `Workspace`, `Project`, `Package`, `Assembly`, `Namespace`, `Type`, `Method`, `HttpEndpoint`, `HttpCallSite`, `ExternalRef` |
+| `[x]` | Zdefiniowany schemat krawędzi: `Contains`, `References`, `DependsOn`, `Implements`, `Inherits`, `Calls`, `Uses`, `HandlesRoute`, `CallsRoute`, `DescribedBy` |
+| `[x]` | Klucze węzłów są wersjonowane i deterministyczne (`{kind}:{fqn}@{version}`) |
+| `[x]` | JSON store workspace działa w układzie shard-per-kind (`manifest.json`, `nodes/*.json`, `edges/*.json`) |
+| `[x]` | Warstwa zapytań v0 udostępnia `GetNode`, `FindNodes`, `GetEdges`, `Neighbors` z indeksami wtórnymi |
+| `[~]` | Round-trip byte-equality: implementacja i testy dodane, uruchomienie testów zablokowane przez lokalne uprawnienia MSBuild/NuGet |
+| `[~]` | Test stabilności dwóch niezależnych runów: test dodany, uruchomienie zablokowane przez lokalne uprawnienia MSBuild/NuGet |
 
 ---
 

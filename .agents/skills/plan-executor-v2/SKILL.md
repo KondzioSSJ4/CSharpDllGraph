@@ -38,7 +38,7 @@ For each group, invoke ONE sub-agent with ALL tasks for that group in plan order
 
 **Run independent groups in parallel** — if groups have no data dependencies between them, spawn their agents in the same message.
 
-Use `model: "sonnet"` for sub-agents with complex logic or multi-file changes. Use `model: "haiku"` for simple, isolated tasks (single-file edits, config changes, docs). Never use `model: "opus"`.
+Use `model: "gpt-5.3-codex"` for sub-agents. Never use any `gpt-5.4` variant (`gpt-5.4`, `gpt-5.4-mini`) for subtasks.
 
 ### Sub-Agent Prompt Template
 

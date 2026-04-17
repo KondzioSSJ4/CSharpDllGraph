@@ -58,6 +58,18 @@ Szczegółowe pliki faz i bramki VALIDATE-STOP opisano w [`plans/README.md`](../
 
 ---
 
+## Model grafu — faza 1
+
+Faza 1 wprowadza wspólny model grafu dla całego produktu.
+Każdy element reprezentowany jest jako węzeł z jednoznacznym identyfikatorem.
+Relacje między elementami reprezentowane są jako krawędzie.
+Model obejmuje strukturę kodu, zależności, elementy HTTP i odwołania zewnętrzne.
+Dane grafu zapisywane są per workspace w małych plikach JSON podzielonych na typy.
+Zapis jest deterministyczny, aby ułatwić porównywanie zmian między kolejnymi przebudowami.
+Na tym modelu opiera się warstwa zapytań używana później przez narzędzia MCP.
+
+---
+
 ## Non-goals dla v1
 
 - **Brak runtime capture** — narzędzie nie przechwytuje ruchu HTTP w czasie działania aplikacji.
