@@ -13,6 +13,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\CSharpDllGraph.Engine\CSharpDllGraph.Engine.csproj" />
+    <ProjectReference Include="..\..\src\CSharpDllGraph.Providers.Dotnet\CSharpDllGraph.Providers.Dotnet.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 

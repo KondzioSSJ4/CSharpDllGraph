@@ -28,8 +28,8 @@
 | `[x]` | Klucze węzłów są wersjonowane i deterministyczne (`{kind}:{fqn}@{version}`) |
 | `[x]` | JSON store workspace działa w układzie shard-per-kind (`manifest.json`, `nodes/*.json`, `edges/*.json`) |
 | `[x]` | Warstwa zapytań v0 udostępnia `GetNode`, `FindNodes`, `GetEdges`, `Neighbors` z indeksami wtórnymi |
-| `[~]` | Round-trip byte-equality: implementacja i testy dodane, uruchomienie testów zablokowane przez lokalne uprawnienia MSBuild/NuGet |
-| `[~]` | Test stabilności dwóch niezależnych runów: test dodany, uruchomienie zablokowane przez lokalne uprawnienia MSBuild/NuGet |
+| `[~]` | Round-trip byte-equality: implementacja i testy dodane; walidacja lokalna zablokowana przez lock `NuGetScratch`, odmowę zapisu MSBuild do `obj/*.cache` oraz brak odkrytych testów w istniejącej zbudowanej DLL |
+| `[~]` | Test stabilności dwóch niezależnych runów: test dodany; walidacja lokalna zablokowana przez lock `NuGetScratch`, odmowę zapisu MSBuild do `obj/*.cache` oraz brak odkrytych testów w istniejącej zbudowanej DLL |
 
 ---
 
@@ -37,13 +37,13 @@
 
 | Status | Wymaganie |
 |---|---|
-| `[ ]` | Provider wczytuje pakiet `.nupkg` i emituje węzły `Package` + `Assembly` |
-| `[ ]` | Provider parsuje plik `.sln`/`.slnx` i odnajduje projekty |
-| `[ ]` | Węzły `Type` i `Method` generowane są dla każdego assembly |
-| `[ ]` | Krawędzie `Contains` łączą `Assembly → Type → Method` |
-| `[ ]` | Krawędzie `DependsOn` odzwierciedlają zależności NuGet per projekt |
-| `[ ]` | Provider ingests sample `.nupkg` + `.sln` i emituje oczekiwany graf strukturalny |
-| `[ ]` | Seam dla przyszłych providerów (interfejs `IGraphProvider`) zarezerwowany |
+| `[x]` | Provider odczytuje rozwiązane artefakty pakietów NuGet z `project.assets.json` i emituje węzły `Package` + `Assembly` |
+| `[x]` | Provider parsuje plik `.sln`/`.slnx` i odnajduje projekty |
+| `[x]` | Węzły `Type` i `Method` generowane są dla każdego publicznego assembly |
+| `[x]` | Krawędzie `Contains` łączą `Package → Assembly → Namespace → Type → Method` |
+| `[x]` | Krawędzie `DependsOn` odzwierciedlają zależności NuGet per projekt i TFM |
+| `[x]` | Fixture offline z sample solution i zablokowanymi artefaktami emituje oczekiwany graf strukturalny |
+| `[x]` | Seam dla przyszłych providerów (`IGraphProvider` + pipeline engine) zarezerwowany |
 
 ---
 

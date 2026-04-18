@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "Sample.WidgetKit": {
+        "type": "Direct",
+        "requested": "[2.0.0, )",
+        "resolved": "2.0.0",
+        "dependencies": {
+          "Sample.Transitive": "2.0.0"
+        }
+      },
+      "Sample.Transitive": {
+        "type": "Transitive",
+        "resolved": "2.0.0"
+      }
+    }
+  }
+}

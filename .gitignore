@@ -367,3 +367,9 @@ DevOps/Postman/newman/
 # Local testing, docs, and scratch files
 local/
 /.github
+
+!tests/Fixtures/
+!tests/Fixtures/SampleSolution/
+!tests/Fixtures/SampleSolution/**/
+!tests/Fixtures/SampleSolution/**/obj/
+!tests/Fixtures/SampleSolution/**/obj/project.assets.json

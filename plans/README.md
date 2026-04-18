@@ -19,15 +19,15 @@ MCP stdio wiring follows the shape of `G:\GIT\KanbnMCP` (do not copy; match conv
 | # | File | Focus | Stop gate |
 |---|------|-------|-----------|
 | 0 | [phase-00-scaffold.md](phase-00-scaffold.md) | Solution, projects, docs skeleton, empty MCP host | MCP host boots on stdio, answers `initialize`, exits cleanly |
-| 1 | [phase-01-graph-store.md](phase-01-graph-store.md) | Graph schema + JSON store + versioned node keys | Round-trip byte-equality proven for synthetic graph |
-| 2 | [phase-02-dotnet-provider.md](phase-02-dotnet-provider.md) | C# provider: package / assembly / type / method nodes + structural edges | Provider ingests sample .nupkg + .sln and emits expected structural graph |
-| 3 | [phase-03-usage-edges.md](phase-03-usage-edges.md) | Usage edges via Roslyn semantic model | User-code → nuget symbol edges with correct version tags |
-| 4 | [phase-04-http-static.md](phase-04-http-static.md) | HTTP static analysis (ASP.NET + Minimal API + fetch/axios) | Producer + consumer nodes matched by normalized URL template |
-| 5 | [phase-05-http-specs.md](phase-05-http-specs.md) | OpenAPI/Swagger + `.http` + Postman ingestion | Spec-sourced endpoints reconcile with static-analysis endpoints |
-| 6 | [phase-06-mcp-tools.md](phase-06-mcp-tools.md) | All 6 MCP tools + cross-workspace URL registry | All tools return expected payloads against fixtures |
-| 7 | [phase-07-cli-watcher.md](phase-07-cli-watcher.md) | CLI, file watcher, incremental rebuild | Edit → rebuild → query latency under 2s on sample |
+| 1 | [2026-04-17_phase-01-graph-store.md](2026-04-17_phase-01-graph-store.md) | Graph schema + JSON store + versioned node keys | Round-trip byte-equality proven for synthetic graph |
+| 2 | [2026-04-17_phase-02-dotnet-provider.md](2026-04-17_phase-02-dotnet-provider.md) | C# provider: package / assembly / type / method nodes + structural edges | Provider ingests sample `.nupkg` + `.slnx` and emits expected structural graph |
+| 3 | [2026-04-17_phase-03-usage-edges.md](2026-04-17_phase-03-usage-edges.md) | Usage edges via Roslyn semantic model | User-code → NuGet symbol edges with correct version tags |
+| 4 | [2026-04-17_phase-04-http-static.md](2026-04-17_phase-04-http-static.md) | HTTP static analysis (ASP.NET + Minimal API + fetch/axios) | Producer + consumer nodes matched by normalized URL template |
+| 5 | [2026-04-17_phase-05-http-specs.md](2026-04-17_phase-05-http-specs.md) | OpenAPI/Swagger + `.http` + Postman ingestion | Spec-sourced endpoints reconcile with static-analysis endpoints |
+| 6 | [2026-04-17_phase-06-mcp-tools.md](2026-04-17_phase-06-mcp-tools.md) | All 6 MCP tools + cross-workspace URL registry | All tools return expected payloads against fixtures |
+| 7 | [2026-04-17_phase-07-cli-watcher.md](2026-04-17_phase-07-cli-watcher.md) | CLI, file watcher, incremental rebuild | Edit → rebuild → query latency under 2s on sample |
 
-**Active phase: `phase-00`.**
+**Active phase: `2026-04-17_phase-01-graph-store.md`.**
 
 ## v1 MCP tool surface (locked)
 
