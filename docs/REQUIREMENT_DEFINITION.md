@@ -64,12 +64,12 @@
 
 | Status | Wymaganie |
 |---|---|
-| `[ ]` | Wykrywanie atrybutów routingowych ASP.NET (`[HttpGet]`, `[Route]`, itp.) |
-| `[ ]` | Wykrywanie Minimal API (`app.MapGet`, `app.MapPost`, itp.) |
-| `[ ]` | Wykrywanie wywołań `fetch`/`axios` w plikach JS/TS (opcjonalnie w v1) |
-| `[ ]` | Węzły `HttpEndpoint` z znormalizowanym szablonem URL |
-| `[ ]` | Krawędzie `Produces` łączące `Method → HttpEndpoint` |
-| `[ ]` | Znormalizowane szablony URL pozwalają na dopasowanie producent–konsument |
+| `[x]` | Wykrywanie atrybutów routingowych ASP.NET (`[HttpGet]`, `[Route]`, itp.) |
+| `[x]` | Wykrywanie Minimal API (`app.MapGet`, `app.MapPost`, itp.) |
+| `[x]` | Wykrywanie wywołań `fetch`/`axios` w plikach JS/TS (opcjonalnie w v1) |
+| `[x]` | Węzły `HttpEndpoint` z znormalizowanym szablonem URL |
+| `[x]` | Krawędzie `HandlesRoute` i `CallsRoute` łączące endpointy z metodami |
+| `[x]` | Znormalizowane szablony URL pozwalają na dopasowanie producent–konsument |
 
 ---
 

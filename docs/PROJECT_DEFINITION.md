@@ -45,16 +45,16 @@ Realizowane w fazie 6 po ukończeniu analizy strukturalnej (fazy 1–5).
 
 Szczegółowe pliki faz i bramki VALIDATE-STOP opisano w [`plans/README.md`](../plans/README.md).
 
-| Faza | Fokus |
-|---|---|
-| 0 | Scaffold — solucja, host MCP, szkielet dokumentacji |
-| 1 | Schemat grafu + JSON store |
-| 2 | Provider .NET — pakiety, assemblies, typy, metody |
-| 3 | Krawędzie użycia (Roslyn) |
-| 4 | Endpointy HTTP — analiza statyczna |
-| 5 | Specyfikacje HTTP (OpenAPI/Swagger, `.http`, Postman) |
-| 6 | Implementacja 6 narzędzi MCP |
-| 7 | CLI + file watcher, inkrementalny rebuild |
+| Faza | Status | Fokus |
+|---|---|---|
+| 0 | ✓ | Scaffold — solucja, host MCP, szkielet dokumentacji |
+| 1 | ✓ | Schemat grafu + JSON store |
+| 2 | ✓ | Provider .NET — pakiety, assemblies, typy, metody |
+| 3 | ✓ | Krawędzie użycia (Roslyn) |
+| 4 | ✓ | Endpointy HTTP — analiza statyczna |
+| 5 |   | Specyfikacje HTTP (OpenAPI/Swagger, `.http`, Postman) |
+| 6 |   | Implementacja 6 narzędzi MCP |
+| 7 |   | CLI + file watcher, inkrementalny rebuild |
 
 ---
 
