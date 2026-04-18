@@ -34,7 +34,7 @@ public sealed class FilePackageFragmentCache : IPackageFragmentCache
 
             return await JsonSerializer.DeserializeAsync<GraphFragment>(stream, SerializerOptions, ct);
         }
-        catch (FileNotFoundException)
+        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
         {
             return null;
         }

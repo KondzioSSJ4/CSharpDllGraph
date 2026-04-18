@@ -1,5 +1,6 @@
 using System.Text.Json;
-using CSharpDllGraph.Cli.Export;
+using CSharpDllGraph.Engine.Export;
+using Microsoft.Extensions.Logging;
 using CSharpDllGraph.Engine.Watch;
 using CSharpDllGraph.Engine.Graph;
 using CSharpDllGraph.Engine.Http;
@@ -185,7 +186,7 @@ internal static class CliApplication
         CancellationToken cancellationToken)
     {
         var store = new JsonWorkspaceStore(graphPath);
-        var pipeline = new GraphBuildPipeline(CreateProviders());
+        var pipeline = new GraphBuildPipeline(CreateProviders(), Microsoft.Extensions.Logging.Abstractions.NullLogger<GraphBuildPipeline>.Instance);
         var snapshot = await pipeline.BuildAndPersistAsync(
             GraphBuildContext.Create(solutionPath, workspaceRootPath, isUpdate),
             store,
@@ -243,7 +244,7 @@ internal static class CliApplication
     {
         return
         [
-            new DotnetProvider(),
+            new DotnetProvider(Microsoft.Extensions.Logging.Abstractions.NullLogger<DotnetProvider>.Instance),
             new ControllerEndpointProvider(),
             new MinimalApiEndpointProvider(),
             new HttpClientCallSiteProvider(),

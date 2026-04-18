@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.Text.Json;
 using CSharpDllGraph.Engine.Graph;
 using CSharpDllGraph.Engine.Graph.Serialization;
 using CSharpDllGraph.Engine.Store;
+using Microsoft.Extensions.Logging;
 
 namespace CSharpDllGraph.Engine.Providers;
 
@@ -13,10 +15,12 @@ public sealed class GraphBuildPipeline
     private const string ProviderCacheFolderName = "providers";
     private static readonly JsonSerializerOptions ProviderFragmentSerializerOptions = GraphJsonSerializerOptions.Create();
     private readonly IReadOnlyList<IGraphProvider> _providers;
+    private readonly ILogger<GraphBuildPipeline> _logger;
 
-    public GraphBuildPipeline(IEnumerable<IGraphProvider> providers)
+    public GraphBuildPipeline(IEnumerable<IGraphProvider> providers, ILogger<GraphBuildPipeline> logger)
     {
         _providers = providers?.ToArray() ?? throw new ArgumentNullException(nameof(providers));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<WorkspaceSnapshot> BuildAndPersistAsync(
@@ -27,6 +31,7 @@ public sealed class GraphBuildPipeline
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(store);
 
+        var totalSw = Stopwatch.StartNew();
         var currentHashes = WorkspaceInputHashes.Collect(context);
         var previousManifest = store.GetManifest();
         var providersToRun = ResolveProvidersToRun(context, previousManifest.ContentHashes, currentHashes);
@@ -40,6 +45,7 @@ public sealed class GraphBuildPipeline
             && providersToRun.Count == 0
             && cachedFragments.Count > 0)
         {
+            _logger.LogInformation("No providers need to run (no relevant changes detected). Returning cached snapshot.");
             return await store.LoadAsync(cancellationToken);
         }
 
@@ -47,6 +53,13 @@ public sealed class GraphBuildPipeline
                                   || providersToRun.Count == _providers.Count
                                   || cachedFragments.Count == 0
                                   || _providers.Any(provider => !cachedFragments.ContainsKey(provider.Id) && !providersToRun.Contains(provider.Id));
+
+        _logger.LogInformation(
+            "Starting {BuildMode} build. Providers to run: [{Providers}]. Full rebuild: {FullRebuild}.",
+            context.IsUpdate ? "incremental" : "initial",
+            string.Join(", ", providersToRun),
+            requiresFullRebuild);
+
         var fragmentsByProvider = requiresFullRebuild
             ? new Dictionary<string, GraphFragment>(StringComparer.Ordinal)
             : new Dictionary<string, GraphFragment>(cachedFragments, StringComparer.Ordinal);
@@ -57,6 +70,9 @@ public sealed class GraphBuildPipeline
             {
                 continue;
             }
+
+            _logger.LogInformation("Provider '{ProviderId}' starting.", provider.Id);
+            var providerSw = Stopwatch.StartNew();
 
             var mergedFragment = requiresFullRebuild || !cachedFragments.TryGetValue(provider.Id, out var cachedFragment)
                 ? GraphFragment.Empty(provider.Id)
@@ -69,6 +85,13 @@ public sealed class GraphBuildPipeline
 
             fragmentsByProvider[provider.Id] = mergedFragment;
             await SaveProviderFragmentAsync(store, mergedFragment, cancellationToken);
+
+            _logger.LogInformation(
+                "Provider '{ProviderId}' finished in {Elapsed:0.0}s. Nodes: {NodeCount}, Edges: {EdgeCount}.",
+                provider.Id,
+                providerSw.Elapsed.TotalSeconds,
+                mergedFragment.Nodes.Count,
+                mergedFragment.Edges.Count);
         }
 
         var combinedFragment = GraphFragment.Empty("workspace");
@@ -93,6 +116,13 @@ public sealed class GraphBuildPipeline
 
         await store.SaveAsync(snapshot, cancellationToken);
         await EnsureMetadataGitIgnoreAsync(context.WorkspaceRootPath, cancellationToken);
+
+        _logger.LogInformation(
+            "Build complete in {Elapsed:0.0}s. Total nodes: {NodeCount}, edges: {EdgeCount}.",
+            totalSw.Elapsed.TotalSeconds,
+            snapshot.Nodes.Count,
+            snapshot.Edges.Count);
+
         return snapshot;
     }
 

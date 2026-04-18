@@ -1,17 +1,26 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using System.Text.Json;
+using System.Threading.Channels;
 using System.Xml.Linq;
 using CSharpDllGraph.Engine.Graph;
 using CSharpDllGraph.Engine.Providers;
 using CSharpDllGraph.Providers.Dotnet.Cache;
+using Microsoft.Extensions.Logging;
 
 namespace CSharpDllGraph.Providers.Dotnet;
 
 public sealed class DotnetProvider : IGraphProvider
 {
     private const string ProviderId = "dotnet";
+    private readonly ILogger<DotnetProvider> _logger;
+
+    public DotnetProvider(ILogger<DotnetProvider> logger)
+    {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
 
     public string Id => ProviderId;
 
@@ -31,10 +40,13 @@ public sealed class DotnetProvider : IGraphProvider
         var packages = new Dictionary<PackageIdentity, PackageWorkItem>(PackageIdentityComparer.Instance);
         var projectPackageVersionsByPath = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
 
+        _logger.LogInformation("DotnetProvider: discovering projects from '{SolutionPath}'.", solutionPath);
+
         foreach (var projectPath in DiscoverProjectPaths(solutionPath))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+            _logger.LogDebug("DotnetProvider: loading assets for project '{ProjectPath}'.", projectPath);
             var assets = LoadProjectAssets(projectPath);
             projectPackageVersionsByPath[projectPath] = BuildPackageVersionMap(assets);
             var projectNode = CreateProjectNode(solutionDirectory, projectPath, assets.TargetFrameworks);
@@ -76,18 +88,28 @@ public sealed class DotnetProvider : IGraphProvider
             }
         }
 
-        foreach (var package in packages.Values.OrderBy(static item => item.Identity.Name, StringComparer.Ordinal)
-                     .ThenBy(static item => item.Identity.Version, StringComparer.Ordinal))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            await EmitPackageStructure(package, collector, packageFragmentCache, cancellationToken);
-        }
+        var packageList = packages.Values
+            .OrderBy(static item => item.Identity.Name, StringComparer.Ordinal)
+            .ThenBy(static item => item.Identity.Version, StringComparer.Ordinal)
+            .ToArray();
 
+        _logger.LogInformation("DotnetProvider: emitting structure for {PackageCount} packages.", packageList.Length);
+
+        await EmitPackagesParallelAsync(packageList, collector, packageFragmentCache, cancellationToken);
+
+        _logger.LogInformation("DotnetProvider: starting Roslyn usage analysis.");
+        var roslynSw = Stopwatch.StartNew();
         var roslynFragment = await RoslynUsageGraphBuilder.BuildAsync(
             solutionPath,
             solutionDirectory,
             projectPackageVersionsByPath,
             cancellationToken);
+
+        _logger.LogInformation(
+            "DotnetProvider: Roslyn analysis finished in {Elapsed:0.0}s. Nodes: {NodeCount}, Edges: {EdgeCount}.",
+            roslynSw.Elapsed.TotalSeconds,
+            roslynFragment.Nodes.Count,
+            roslynFragment.Edges.Count);
 
         foreach (var node in roslynFragment.Nodes)
         {
@@ -377,18 +399,73 @@ public sealed class DotnetProvider : IGraphProvider
             });
     }
 
-    private static async Task EmitPackageStructure(
-        PackageWorkItem package,
+    private async Task EmitPackagesParallelAsync(
+        IReadOnlyList<PackageWorkItem> packageList,
         GraphCollector collector,
         IPackageFragmentCache cache,
+        CancellationToken cancellationToken)
+    {
+        var parallelism = Math.Max(Environment.ProcessorCount * 2 - 1, 4);
+        var total = packageList.Count;
+        var processed = 0;
+
+        var channel = Channel.CreateBounded<PackageWorkItem>(new BoundedChannelOptions(parallelism * 2)
+        {
+            FullMode = BoundedChannelFullMode.Wait,
+            SingleReader = false,
+            SingleWriter = true
+        });
+
+        var workers = Enumerable
+            .Range(0, parallelism)
+            .Select(_ => Task.Run(async () =>
+            {
+                await foreach (var package in channel.Reader.ReadAllAsync(cancellationToken))
+                {
+                    var fragment = await BuildPackageFragmentAsync(package, cache, _logger, cancellationToken);
+                    collector.AddFragmentThreadSafe(fragment);
+
+                    var index = Interlocked.Increment(ref processed);
+                    _logger.LogDebug(
+                        "DotnetProvider: package {Index}/{Total} — {PackageName}@{PackageVersion}.",
+                        index,
+                        total,
+                        package.Identity.Name,
+                        package.Identity.Version);
+                }
+            }, cancellationToken))
+            .ToArray();
+
+        foreach (var package in packageList)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await channel.Writer.WriteAsync(package, cancellationToken);
+        }
+
+        channel.Writer.Complete();
+        await Task.WhenAll(workers);
+    }
+
+    private static async Task<GraphFragment> BuildPackageFragmentAsync(
+        PackageWorkItem package,
+        IPackageFragmentCache cache,
+        ILogger logger,
         CancellationToken cancellationToken)
     {
         var cachedFragment = await cache.TryGetAsync(package.Identity.Name, package.Identity.Version, cancellationToken);
         if (cachedFragment is not null)
         {
-            collector.AddFragment(cachedFragment);
-            return;
+            logger.LogDebug(
+                "DotnetProvider: cache hit for {PackageName}@{PackageVersion}.",
+                package.Identity.Name,
+                package.Identity.Version);
+            return cachedFragment;
         }
+
+        logger.LogInformation(
+            "DotnetProvider: cache miss — reflecting {PackageName}@{PackageVersion}.",
+            package.Identity.Name,
+            package.Identity.Version);
 
         var packageNodeId = new NodeId(NodeKind.Package, package.Identity.Name, package.Identity.Version);
         var packageCollector = new GraphCollector();
@@ -422,8 +499,14 @@ public sealed class DotnetProvider : IGraphProvider
         }
 
         var packageFragment = packageCollector.ToFragment(ProviderId);
-        collector.AddFragment(packageFragment);
         await cache.SetAsync(package.Identity.Name, package.Identity.Version, packageFragment, cancellationToken);
+        logger.LogDebug(
+            "DotnetProvider: reflected and cached {PackageName}@{PackageVersion}. Nodes: {NodeCount}.",
+            package.Identity.Name,
+            package.Identity.Version,
+            packageFragment.Nodes.Count);
+
+        return packageFragment;
     }
 
     private static IEnumerable<string> ResolveAssemblyPaths(PackageWorkItem package)
@@ -696,6 +779,7 @@ public sealed class DotnetProvider : IGraphProvider
     {
         private readonly Dictionary<NodeId, Node> _nodes = new();
         private readonly Dictionary<string, Edge> _edges = new(StringComparer.Ordinal);
+        private readonly Lock _lock = new();
 
         public void AddNode(Node node)
         {
@@ -727,6 +811,14 @@ public sealed class DotnetProvider : IGraphProvider
             foreach (var edge in fragment.Edges)
             {
                 AddEdge(edge);
+            }
+        }
+
+        public void AddFragmentThreadSafe(GraphFragment fragment)
+        {
+            lock (_lock)
+            {
+                AddFragment(fragment);
             }
         }
 

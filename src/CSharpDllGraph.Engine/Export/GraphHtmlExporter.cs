@@ -2,11 +2,11 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace CSharpDllGraph.Cli.Export;
+namespace CSharpDllGraph.Engine.Export;
 
 public static class GraphHtmlExporter
 {
-    private const string TemplateResourceName = "CSharpDllGraph.Cli.Assets.graph.html";
+    private const string TemplateResourceName = "CSharpDllGraph.Engine.Assets.graph.html";
     private const string GraphDataPlaceholder = "/*GRAPH_DATA_PLACEHOLDER*/";
 
     public static async Task ExportAsync(string graphPath, string workspaceRoot, CancellationToken ct)
@@ -62,12 +62,30 @@ public static class GraphHtmlExporter
             var shardJson = await File.ReadAllTextAsync(shardPath, ct);
             using var document = JsonDocument.Parse(shardJson);
 
-            if (document.RootElement.ValueKind != JsonValueKind.Array)
+            var root = document.RootElement;
+
+            JsonElement array;
+            if (root.ValueKind == JsonValueKind.Array)
             {
-                throw new InvalidOperationException($"Graph shard '{shardPath}' must contain a JSON array.");
+                array = root;
+            }
+            else if (root.ValueKind == JsonValueKind.Object)
+            {
+                // shards are wrapped: { "nodes": [...] } or { "edges": [...] }
+                var inner = root.EnumerateObject().FirstOrDefault(p =>
+                    p.Value.ValueKind == JsonValueKind.Array);
+                if (inner.Value.ValueKind != JsonValueKind.Array)
+                {
+                    continue;
+                }
+                array = inner.Value;
+            }
+            else
+            {
+                continue;
             }
 
-            foreach (var element in document.RootElement.EnumerateArray())
+            foreach (var element in array.EnumerateArray())
             {
                 elements.Add(element.Clone());
             }

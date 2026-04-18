@@ -117,16 +117,33 @@ internal static class RoslynUsageGraphBuilder
 
     private static IEnumerable<string> DiscoverProjectPaths(string solutionPath)
     {
+        var baseDirectory = Path.GetDirectoryName(solutionPath)
+            ?? throw new InvalidOperationException("Solution directory is required.");
+
         if (solutionPath.EndsWith(".slnx", StringComparison.OrdinalIgnoreCase))
         {
             var document = XDocument.Load(solutionPath, LoadOptions.None);
-            var baseDirectory = Path.GetDirectoryName(solutionPath)
-                ?? throw new InvalidOperationException("Solution directory is required.");
-
             return document
                 .Descendants("Project")
                 .Select(static element => element.Attribute("Path")?.Value)
                 .Where(static path => !string.IsNullOrWhiteSpace(path))
+                .Select(path => Path.GetFullPath(Path.Combine(baseDirectory, path!)))
+                .Where(static path => path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(static path => path, StringComparer.Ordinal)
+                .ToArray();
+        }
+
+        if (solutionPath.EndsWith(".sln", StringComparison.OrdinalIgnoreCase))
+        {
+            return File.ReadLines(solutionPath)
+                .Select(static line => line.Trim())
+                .Where(static line => line.StartsWith("Project(", StringComparison.Ordinal))
+                .Select(static line =>
+                {
+                    var parts = line.Split(',');
+                    return parts.Length >= 2 ? parts[1].Trim().Trim('"') : null;
+                })
+                .Where(static path => path is not null)
                 .Select(path => Path.GetFullPath(Path.Combine(baseDirectory, path!)))
                 .Where(static path => path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
                 .OrderBy(static path => path, StringComparer.Ordinal)

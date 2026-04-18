@@ -1,4 +1,5 @@
 using CSharpDllGraph.Engine.Config;
+using CSharpDllGraph.Engine.Export;
 using CSharpDllGraph.Engine.Providers;
 using CSharpDllGraph.Engine.Store;
 using System.Threading.Channels;
@@ -56,6 +57,7 @@ public sealed class WorkspaceAutoManager : IHostedService, IDisposable
         else
         {
             _logger.LogInformation("Using existing graph manifest at '{GraphPath}'.", manifestPath);
+            await TryExportHtmlAsync(cancellationToken);
         }
 
         _stopCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -163,8 +165,22 @@ public sealed class WorkspaceAutoManager : IHostedService, IDisposable
         }
 
         await _pipeline.BuildAndPersistAsync(context, store, cancellationToken);
+        await TryExportHtmlAsync(cancellationToken);
         _workspaceContext.Invalidate();
         _logger.LogInformation("Workspace graph invalidated after {BuildMode} build.", context.IsUpdate ? "incremental" : "initial");
+    }
+
+    private async Task TryExportHtmlAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await GraphHtmlExporter.ExportAsync(_config.GraphPath, _config.RootPath, cancellationToken);
+            _logger.LogInformation("HTML visualization exported to '{RootPath}/.csharpdllgraph/graph.html'.", _config.RootPath);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Failed to export HTML visualization.");
+        }
     }
 
     private static string ResolveSolutionPath(WorkspaceConfig config)
