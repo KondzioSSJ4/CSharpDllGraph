@@ -47,10 +47,10 @@ function Resolve-PlanFile {
         [void]$searchNames.Add("$PlanValue.md")
     }
 
-    $matches = Get-ChildItem -LiteralPath $plansRoot -File -Recurse |
+    $matches = @(Get-ChildItem -LiteralPath $plansRoot -File -Recurse |
         Where-Object {
             $searchNames.Contains($_.Name) -or $searchNames.Contains($_.BaseName)
-        }
+        })
 
     if ($matches.Count -ne 1) {
         $found = if ($matches) { ($matches | ForEach-Object FullName) -join '; ' } else { 'none' }
@@ -110,7 +110,7 @@ function Assert-TaskField {
 function Validate-PlanData {
     param([Parameter(Mandatory = $true)][hashtable]$PlanData)
 
-    $allowedStatuses = @('pending', 'in_progress', 'done', 'failed')
+    $allowedStatuses = @('[ ]', '[~]', '[x]')
     $allowedProviders = @('codex', 'claude-code')
     $taskIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 
@@ -203,12 +203,12 @@ function Get-ReadyTasks {
     param([Parameter(Mandatory = $true)][hashtable]$PlanData)
 
     $doneIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    foreach ($task in $PlanData.Tasks | Where-Object { $_.status -eq 'done' }) {
+    foreach ($task in $PlanData.Tasks | Where-Object { $_.status -eq '[x]' }) {
         [void]$doneIds.Add([string]$task.id)
     }
 
     $ready = @()
-    foreach ($task in $PlanData.Tasks | Where-Object { $_.status -eq 'pending' }) {
+    foreach ($task in $PlanData.Tasks | Where-Object { $_.status -eq '[ ]' }) {
         $dependenciesMet = $true
         foreach ($dependency in $task.dependsOn) {
             if (-not $doneIds.Contains([string]$dependency)) {
@@ -249,6 +249,8 @@ Execution rules:
 - Execute only this task
 - Read docs/PROJECT_DEFINITION.md before editing
 - Work on the current shared git branch
+- Do not edit the plan file
+- Do not change task statuses
 - Do not commit
 - Do not run broad validation unless the task explicitly asks for it
 - Final response must be exactly SUCCESS or FAILURE: <one short sentence>
@@ -372,7 +374,7 @@ function Read-TaskResult {
     $output = Get-Content -Raw -LiteralPath $ExecutionHandle.ResultPath
     $trimmed = $output.Trim()
 
-    if ($trimmed -eq 'SUCCESS') {
+    if ($trimmed.StartsWith('SUCCESS', [System.StringComparison]::Ordinal)) {
         return @{
             Success = $true
             Message = 'SUCCESS'
@@ -381,7 +383,7 @@ function Read-TaskResult {
         }
     }
 
-    if ($trimmed -match '^FAILURE:\s+.+') {
+    if ($trimmed.StartsWith('FAILURE:', [System.StringComparison]::Ordinal)) {
         return @{
             Success = $false
             Message = $trimmed
@@ -443,7 +445,7 @@ if ($DryRun) {
 }
 
 while ($true) {
-    $pendingTasks = @($planData.Tasks | Where-Object { $_.status -eq 'pending' })
+    $pendingTasks = @($planData.Tasks | Where-Object { $_.status -eq '[ ]' })
     if ($pendingTasks.Count -eq 0) {
         break
     }
@@ -457,7 +459,7 @@ while ($true) {
     Write-Host "Starting batch: $((@($batch | ForEach-Object id)) -join ', ')"
 
     foreach ($task in $batch) {
-        $task.status = 'in_progress'
+        $task.status = '[~]'
     }
     Save-PlanData -PlanData $planData -PlanPath $resolvedPlan
 
@@ -470,11 +472,11 @@ while ($true) {
     foreach ($handle in $handles) {
         $result = Read-TaskResult -ExecutionHandle $handle
         if ($result.Success) {
-            $handle.Task.status = 'done'
+            $handle.Task.status = '[x]'
             Write-Host "Task $($handle.Task.id): SUCCESS"
         }
         else {
-            $handle.Task.status = 'failed'
+            $handle.Task.status = '[ ]'
             $batchFailed = $true
             Write-Error "Task $($handle.Task.id): $($result.Message)"
             Write-Host "Log: $($result.LogPath)"

@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using CSharpDllGraph.Engine.Graph;
+using CSharpDllGraph.Engine.Http;
 using CSharpDllGraph.Engine.Providers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -343,12 +344,16 @@ public sealed class HttpClientCallSiteProvider : IGraphProvider
 
         public override void VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
-            VisitMethodLikeDeclaration(node, base.VisitMethodDeclaration);
+            VisitMethodDeclarationCore(
+                node,
+                base.VisitMethodDeclaration);
         }
 
         public override void VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
         {
-            VisitMethodLikeDeclaration(node, base.VisitConstructorDeclaration);
+            VisitConstructorDeclarationCore(
+                node,
+                base.VisitConstructorDeclaration);
         }
 
         public override void VisitInvocationExpression(InvocationExpressionSyntax node)
@@ -380,8 +385,33 @@ public sealed class HttpClientCallSiteProvider : IGraphProvider
             visitChildren(node);
         }
 
-        private void VisitMethodLikeDeclaration<TSyntax>(TSyntax node, Action<TSyntax> visitChildren)
-            where TSyntax : SyntaxNode
+        private void VisitMethodDeclarationCore(
+            MethodDeclarationSyntax node,
+            Action<MethodDeclarationSyntax> visitChildren)
+        {
+            if (_semanticModel.GetDeclaredSymbol(node) is IMethodSymbol methodSymbol)
+            {
+                var identifier = GetMethodIdentifier(methodSymbol);
+                var nodeId = new NodeId(NodeKind.Method, identifier, _projectVersionToken);
+                _sourceNodes.Push((nodeId, identifier));
+                try
+                {
+                    visitChildren(node);
+                }
+                finally
+                {
+                    _sourceNodes.Pop();
+                }
+
+                return;
+            }
+
+            visitChildren(node);
+        }
+
+        private void VisitConstructorDeclarationCore(
+            ConstructorDeclarationSyntax node,
+            Action<ConstructorDeclarationSyntax> visitChildren)
         {
             if (_semanticModel.GetDeclaredSymbol(node) is IMethodSymbol methodSymbol)
             {
@@ -572,7 +602,7 @@ public sealed class HttpClientCallSiteProvider : IGraphProvider
             return (leftTemplate + rightTemplate, confidence);
         }
 
-        private (string urlTemplate, string confidence) TryNormalizeStringFormat(
+        private static (string urlTemplate, string confidence) TryNormalizeStringFormat(
             InvocationExpressionSyntax invocation)
         {
             // Handle string.Format("/api/users/{0}", id) → "/api/users/{var}"

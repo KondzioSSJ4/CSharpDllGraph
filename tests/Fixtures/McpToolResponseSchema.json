@@ -1,0 +1,84 @@
+{
+  "describe_package_api": {
+    "required": ["package", "version", "workspaces", "namespaces"],
+    "children": {
+      "namespaces": {
+        "required": ["namespace", "types"],
+        "children": {
+          "types": {
+            "required": ["name", "kind", "methods"],
+            "children": {
+              "methods": {
+                "required": ["name", "signature"]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "list_dependencies": {
+    "required": ["workspace", "projects"],
+    "children": {
+      "projects": {
+        "required": ["project", "projectPath", "targetFrameworks", "packages"],
+        "children": {
+          "packages": {
+            "required": ["package", "version", "isDirect", "targetFramework", "packageNodeId", "project"]
+          }
+        }
+      }
+    }
+  },
+  "find_version_conflicts": {
+    "required": ["workspace", "conflicts"],
+    "children": {
+      "conflicts": {
+        "required": ["package", "versions", "projects"],
+        "children": {
+          "projects": {
+            "required": ["project", "version", "targetFramework", "isDirect"]
+          }
+        }
+      }
+    }
+  },
+  "find_usages": {
+    "required": ["matchedSymbols", "workspaces"],
+    "children": {
+      "matchedSymbols": {
+        "required": ["symbolId", "kind", "fullName", "version", "displayName"]
+      },
+      "workspaces": {
+        "required": ["workspace", "usages"],
+        "children": {
+          "usages": {
+            "required": ["symbolId", "usageKind", "file", "startLine", "startColumn", "endLine", "endColumn", "sourceLabel", "enclosingSymbolId", "enclosingSymbolKind", "enclosingSymbol", "enclosingDisplayName"]
+          }
+        }
+      }
+    }
+  },
+  "suggest_usage": {
+    "required": ["maxResults", "matchedSymbols", "suggestions"],
+    "children": {
+      "matchedSymbols": {
+        "required": ["symbolId", "kind", "fullName", "version", "displayName"]
+      },
+      "suggestions": {
+        "required": ["workspace", "symbolId", "callSiteSymbolId", "callSiteSymbolKind", "callSiteSymbol", "callSiteDisplayName", "file", "startLine", "startColumn", "endLine", "endColumn", "sourceLabel", "excerpt", "frequency", "diversity", "recencyUtcTicks", "rankReason"]
+      }
+    }
+  },
+  "trace_http_call": {
+    "required": ["method", "path", "producers", "consumers"],
+    "children": {
+      "producers": {
+        "required": ["workspace", "endpointId", "displayName", "method", "path", "sourceFile", "startLine", "startColumn", "sourceLabel", "handlerSymbolId", "handlerSymbol", "handlerDisplayName"]
+      },
+      "consumers": {
+        "required": ["workspace", "callSiteId", "displayName", "method", "path", "sourceFile", "startLine", "startColumn", "sourceLabel", "callerSymbolId", "callerSymbol", "callerDisplayName"]
+      }
+    }
+  }
+}

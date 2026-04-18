@@ -2,7 +2,9 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using CSharpDllGraph.Engine.Graph;
+using CSharpDllGraph.Engine.Http;
 using CSharpDllGraph.Engine.Providers;
 
 namespace CSharpDllGraph.Providers.Dotnet.Http;

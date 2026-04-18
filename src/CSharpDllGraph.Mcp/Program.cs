@@ -1,3 +1,6 @@
+using CSharpDllGraph.Engine.Registry;
+using CSharpDllGraph.Engine.Query;
+using CSharpDllGraph.Engine.Http;
 using CSharpDllGraph.Mcp.Logging;
 using CSharpDllGraph.Mcp.Tools;
 using CSharpDllGraph.Providers.Dotnet;
@@ -25,6 +28,10 @@ builder.Logging.SetMinimumLevel(LogLevel.Information);
 builder.Logging.AddProvider(fileLoggerProvider);
 
 builder.Services
+    .AddSingleton<WorkspaceRegistry>()
+    .AddSingleton<IWorkspaceRegistry>(static serviceProvider => serviceProvider.GetRequiredService<WorkspaceRegistry>())
+    .AddSingleton<IGraphQueryService, GraphQueryService>()
+    .AddSingleton<ICrossWorkspaceHttpIndexBuilder, CrossWorkspaceHttpIndexBuilder>()
     .AddMcpServer()
     .WithStdioServerTransport()
     .WithTools<CSharpDllGraphTools>();

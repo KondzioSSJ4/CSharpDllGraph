@@ -62,9 +62,9 @@ public sealed class HttpEndpointReconcilerTests
     public void Reconcile_SingleEndpoint_ReturnedUnchanged()
     {
         var node = MakeEndpoint("GET", "/api/users", "project-src/app");
-        var (nodes, edges) = HttpEndpointReconciler.Reconcile([node], []);
+        var (nodes, _) = HttpEndpointReconciler.Reconcile([node], []);
 
-        var endpoint = Assert.Single(nodes.Where(static n => n.Kind == NodeKind.HttpEndpoint));
+        var endpoint = Assert.Single(nodes, static n => n.Kind == NodeKind.HttpEndpoint);
         Assert.Equal(node.Id, endpoint.Id);
     }
 

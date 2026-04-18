@@ -53,7 +53,7 @@ Szczegółowe pliki faz i bramki VALIDATE-STOP opisano w [`plans/README.md`](../
 | 3 | ✓ | Krawędzie użycia (Roslyn) |
 | 4 | ✓ | Endpointy HTTP — analiza statyczna |
 | 5 | ✓ | Specyfikacje HTTP (OpenAPI/Swagger, `.http`, Postman) + reconciliation |
-| 6 |   | Implementacja 6 narzędzi MCP |
+| 6 | ✓ | Implementacja 6 narzędzi MCP |
 | 7 |   | CLI + file watcher, inkrementalny rebuild |
 
 ---

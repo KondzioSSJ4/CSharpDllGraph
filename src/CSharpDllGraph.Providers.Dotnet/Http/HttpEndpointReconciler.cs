@@ -1,5 +1,6 @@
 using System.Text.Json;
 using CSharpDllGraph.Engine.Graph;
+using CSharpDllGraph.Engine.Http;
 
 namespace CSharpDllGraph.Providers.Dotnet.Http;
 
@@ -101,7 +102,7 @@ public static class HttpEndpointReconciler
             ? (r.GetString() ?? string.Empty)
             : string.Empty;
 
-        var normalizedPath = RouteNormalizer.NormalizePath(rawPath);
+        var normalizedPath = HttpRouteNormalizer.NormalizePath(rawPath);
 
         return $"{method} {normalizedPath}";
     }

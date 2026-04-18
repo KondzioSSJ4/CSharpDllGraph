@@ -1,4 +1,4 @@
-using CSharpDllGraph.Providers.Dotnet.Http;
+using CSharpDllGraph.Engine.Http;
 
 namespace CSharpDllGraph.Providers.Dotnet.Tests;
 
@@ -7,30 +7,30 @@ public sealed class RouteNormalizerTests
     // ── NormalizePath ──────────────────────────────────────────────────────────
 
     [Theory]
-    [InlineData(":id",              "{id}")]    // Express colon param
+    [InlineData(":id",              "/{id}")]    // Express colon param
     [InlineData("/api/:id",         "/api/{id}")]
     [InlineData("/api/:userId/orders/:orderId", "/api/{userid}/orders/{orderid}")]
     public void ColonParams_AreNormalizedToCurlyBrace(string input, string expected)
     {
-        Assert.Equal(expected, RouteNormalizer.NormalizePath(input));
+        Assert.Equal(expected, HttpRouteNormalizer.NormalizePath(input));
     }
 
     [Theory]
-    [InlineData("{id:int}",             "{id}")]    // ASP.NET constraint
+    [InlineData("{id:int}",             "/{id}")]    // ASP.NET constraint
     [InlineData("/api/{id:int}",        "/api/{id}")]
     [InlineData("/api/{name:minlength(2)}", "/api/{name}")]
     public void ConstraintParams_AreStripped(string input, string expected)
     {
-        Assert.Equal(expected, RouteNormalizer.NormalizePath(input));
+        Assert.Equal(expected, HttpRouteNormalizer.NormalizePath(input));
     }
 
     [Theory]
-    [InlineData("{id?}",            "{id}")]    // optional parameter
+    [InlineData("{id?}",            "/{id}")]    // optional parameter
     [InlineData("/api/{id?}",       "/api/{id}")]
     [InlineData("/api/{page?}",     "/api/{page}")]
     public void OptionalParams_AreNormalized(string input, string expected)
     {
-        Assert.Equal(expected, RouteNormalizer.NormalizePath(input));
+        Assert.Equal(expected, HttpRouteNormalizer.NormalizePath(input));
     }
 
     [Theory]
@@ -38,13 +38,13 @@ public sealed class RouteNormalizerTests
     [InlineData("/api/users//",     "/api/users")]
     public void TrailingSlash_IsStripped(string input, string expected)
     {
-        Assert.Equal(expected, RouteNormalizer.NormalizePath(input));
+        Assert.Equal(expected, HttpRouteNormalizer.NormalizePath(input));
     }
 
     [Fact]
     public void RootSlash_IsPreserved()
     {
-        Assert.Equal("/", RouteNormalizer.NormalizePath("/"));
+        Assert.Equal("/", HttpRouteNormalizer.NormalizePath("/"));
     }
 
     [Theory]
@@ -54,7 +54,7 @@ public sealed class RouteNormalizerTests
     [InlineData("https://example.com/api/{id:int}",     "/api/{id}")]
     public void FullUrl_HostIsStripped_PathIsNormalized(string input, string expected)
     {
-        Assert.Equal(expected, RouteNormalizer.NormalizePath(input));
+        Assert.Equal(expected, HttpRouteNormalizer.NormalizePath(input));
     }
 
     [Theory]
@@ -62,7 +62,7 @@ public sealed class RouteNormalizerTests
     [InlineData("/Api/Users",   "/api/users")]
     public void Path_IsLowercased(string input, string expected)
     {
-        Assert.Equal(expected, RouteNormalizer.NormalizePath(input));
+        Assert.Equal(expected, HttpRouteNormalizer.NormalizePath(input));
     }
 
     /// <summary>
@@ -71,12 +71,12 @@ public sealed class RouteNormalizerTests
     /// different naming conventions into one canonical token.
     /// </summary>
     [Theory]
-    [InlineData("{**path}",             "{**}")]
+    [InlineData("{**path}",             "/{**}")]
     [InlineData("/files/{**path}",      "/files/{**}")]
     [InlineData("/files/{*remainder}",  "/files/{**}")]
     public void CatchAll_NormalizesToDoubleStar(string input, string expected)
     {
-        Assert.Equal(expected, RouteNormalizer.NormalizePath(input));
+        Assert.Equal(expected, HttpRouteNormalizer.NormalizePath(input));
     }
 
     // ── Normalize (method + path) ──────────────────────────────────────────────
@@ -88,14 +88,14 @@ public sealed class RouteNormalizerTests
     [InlineData("delete",   "DELETE")]
     public void HttpMethod_IsUppercased(string input, string expectedMethod)
     {
-        var (method, _) = RouteNormalizer.Normalize(input, "/api/users");
+        var (method, _) = HttpRouteNormalizer.Normalize(input, "/api/users");
         Assert.Equal(expectedMethod, method);
     }
 
     [Fact]
     public void Normalize_ReturnsBothMethodAndPath()
     {
-        var (method, path) = RouteNormalizer.Normalize("get", "/api/users/{id:int}/");
+        var (method, path) = HttpRouteNormalizer.Normalize("get", "/api/users/{id:int}/");
         Assert.Equal("GET", method);
         Assert.Equal("/api/users/{id}", path);
     }
@@ -104,10 +104,10 @@ public sealed class RouteNormalizerTests
     public void Normalize_SameLogicalRoute_ProducerAndConsumer_Match()
     {
         // Producer registers: GET /api/orders/{id:int}
-        var producer = RouteNormalizer.Normalize("GET", "/api/orders/{id:int}");
+        var producer = HttpRouteNormalizer.Normalize("GET", "/api/orders/{id:int}");
 
         // Consumer calls: get https://service/api/orders/:id/
-        var consumer = RouteNormalizer.Normalize("get", "https://service/api/orders/:id/");
+        var consumer = HttpRouteNormalizer.Normalize("get", "https://service/api/orders/:id/");
 
         Assert.Equal(producer, consumer);
     }

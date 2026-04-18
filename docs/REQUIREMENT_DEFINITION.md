@@ -89,15 +89,15 @@
 
 | Status | Wymaganie |
 |---|---|
-| `[ ]` | Narzędzie `describe_package_api` zwraca publiczną powierzchnię pakietu NuGet |
-| `[ ]` | Narzędzie `find_usages` zwraca miejsca użycia symbolu w kodzie użytkownika |
-| `[ ]` | Narzędzie `trace_http_call` zwraca wywołania trafiające do endpointu X |
-| `[ ]` | Narzędzie `list_dependencies` zwraca rozwiązane wersje pakietów per projekt |
-| `[ ]` | Narzędzie `find_version_conflicts` wykrywa ten sam pakiet w różnych wersjach |
-| `[ ]` | Narzędzie `suggest_usage` zwraca kanoniczne miejsca użycia symbolu |
-| `[ ]` | Wszystkie narzędzia zwracają oczekiwane dane na podstawie fixture'ów testowych |
-| `[ ]` | Żadne narzędzie nie wywołuje LLM ani osadzeń wektorowych |
-| `[ ]` | Rejestr URL cross-workspace obsługuje `trace_http_call` między solucjami |
+| `[x]` | Narzędzie `describe_package_api` zwraca publiczną powierzchnię pakietu NuGet |
+| `[x]` | Narzędzie `find_usages` zwraca miejsca użycia symbolu w kodzie użytkownika |
+| `[x]` | Narzędzie `trace_http_call` zwraca wywołania trafiające do endpointu X |
+| `[x]` | Narzędzie `list_dependencies` zwraca rozwiązane wersje pakietów per projekt |
+| `[x]` | Narzędzie `find_version_conflicts` wykrywa ten sam pakiet w różnych wersjach |
+| `[x]` | Narzędzie `suggest_usage` zwraca kanoniczne miejsca użycia symbolu |
+| `[x]` | Wszystkie narzędzia zwracają oczekiwane dane na podstawie fixture'ów testowych |
+| `[x]` | Żadne narzędzie nie wywołuje LLM ani osadzeń wektorowych |
+| `[x]` | Rejestr URL cross-workspace obsługuje `trace_http_call` między solucjami |
 
 ---
 

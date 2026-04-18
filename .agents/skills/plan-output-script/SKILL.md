@@ -43,7 +43,7 @@ Write exactly this structure:
 {
   "id": "T1",
   "title": "{Task title}",
-  "status": "pending",
+  "status": "[ ]",
   "agent": "backend-csharp",
   "dependsOn": [],
   "paths": [
@@ -66,7 +66,7 @@ Write exactly this structure:
 {
   "id": "T2",
   "title": "{Task title}",
-  "status": "pending",
+  "status": "[ ]",
   "agent": "docs-product",
   "dependsOn": [
     "T1"
@@ -89,7 +89,11 @@ Write exactly this structure:
 
 - Every task must have one exact agent name
 - Every task must have one stable `id`
-- Use only `pending`, `in_progress`, `done`, `failed` for `status`
+- Use only `[ ]`, `[~]`, `[x]` for `status`
+- `[ ]` = not done
+- `[~]` = in progress
+- `[x]` = done
+- Status is owned by the executor script, not by AI agents
 - Use exact dependency ids in `dependsOn`
 - Keep `steps` concrete enough for one execution agent
 - Keep `paths` short and real
@@ -124,9 +128,10 @@ The script may override both at runtime, so keep plan defaults sensible.
 2. Break work into explicit task units
 3. Assign exact agents
 4. Add exact dependency edges
-5. Add provider/model defaults in `plan-meta`
-6. Save the file in `/plans/`
-7. Report the saved path
+5. Set every new task status to `[ ]`
+6. Add provider/model defaults in `plan-meta`
+7. Save the file in `/plans/`
+8. Report the saved path
 
 ## Executor
 

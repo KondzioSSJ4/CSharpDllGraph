@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using CSharpDllGraph.Engine.Graph;
+using CSharpDllGraph.Engine.Http;
 using CSharpDllGraph.Engine.Providers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;

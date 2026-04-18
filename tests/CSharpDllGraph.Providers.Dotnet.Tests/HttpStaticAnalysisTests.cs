@@ -1,4 +1,5 @@
 using CSharpDllGraph.Engine.Graph;
+using CSharpDllGraph.Engine.Http;
 using CSharpDllGraph.Engine.Providers;
 using CSharpDllGraph.Engine.Store;
 using CSharpDllGraph.Providers.Dotnet.Http;
@@ -124,8 +125,8 @@ public sealed class HttpStaticAnalysisTests
         // Validate that RouteNormalizer.NormalizePath strips constraints:
         // Producer: /api/users/{id:int} → /api/users/{id}
         // Consumer: /api/users/{id}     → /api/users/{id}
-        var producerNormalized = RouteNormalizer.NormalizePath("/api/users/{id:int}");
-        var consumerNormalized = RouteNormalizer.NormalizePath("/api/users/{id}");
+        var producerNormalized = HttpRouteNormalizer.NormalizePath("/api/users/{id:int}");
+        var consumerNormalized = HttpRouteNormalizer.NormalizePath("/api/users/{id}");
 
         Assert.Equal(producerNormalized, consumerNormalized);
         Assert.Equal("/api/users/{id}", producerNormalized);
@@ -279,7 +280,7 @@ public sealed class HttpStaticAnalysisTests
     }
 
     [Fact]
-    public void JsFetchCallSiteProvider_ExtractsAtLeastThreeCallSiteNodes_FromFrontendFixture()
+    public async Task JsFetchCallSiteProvider_ExtractsAtLeastThreeCallSiteNodes_FromFrontendFixture()
     {
         var frontendFixtureRoot = GetFrontendFixtureRoot();
         Assert.True(Directory.Exists(frontendFixtureRoot), $"Frontend fixture directory not found: {frontendFixtureRoot}");
@@ -290,18 +291,11 @@ public sealed class HttpStaticAnalysisTests
             Path.Combine(frontendFixtureRoot, "dummy.slnx"),
             frontendFixtureRoot);
 
-        var fragmentsTask = Task.Run(async () =>
+        var callSiteNodes = new List<Node>();
+        await foreach (var fragment in provider.CollectAsync(context))
         {
-            var callSiteNodes = new List<Node>();
-            await foreach (var fragment in provider.CollectAsync(context))
-            {
-                callSiteNodes.AddRange(fragment.Nodes.Where(static n => n.Kind == NodeKind.HttpCallSite));
-            }
-
-            return callSiteNodes;
-        });
-
-        var callSiteNodes = fragmentsTask.GetAwaiter().GetResult();
+            callSiteNodes.AddRange(fragment.Nodes.Where(static n => n.Kind == NodeKind.HttpCallSite));
+        }
 
         Assert.True(
             callSiteNodes.Count >= 3,
