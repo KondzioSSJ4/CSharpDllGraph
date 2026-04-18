@@ -30,9 +30,17 @@ Nie opisuj jak planujesz planować. Nie wyjaśniaj kroków procesu. Pytaj i prop
 
 ### Phase 2 — Output
 
-Gdy użytkownik odpowie na pytania i zaakceptuje kierunek — natychmiast wywołaj skill `plan-output`. Nie pytaj jak dostarczyć plan. Nie pokazuj planu w czacie. Po prostu uruchom `plan-output`.
+Gdy użytkownik odpowie na pytania i zaakceptuje kierunek — zapytaj który format planu:
 
-Jeśli request bazuje na pliku z `improvements/`, przekaż tę ścieżkę do `plan-output` żeby mógł przenieść plik do `done/improvements/`.
+```
+Który format planu?
+a) /plan-output — czytelny Markdown dla człowieka (domyślny)
+b) /plan-output-script — JSON z agentami i zależnościami, wykonywalny przez execute-plan.ps1
+```
+
+Następnie natychmiast wywołaj wybrany skill. Nie pokazuj planu w czacie.
+
+Jeśli request bazuje na pliku z `improvements/`, przekaż tę ścieżkę do wybranego skilla żeby mógł przenieść plik do `done/improvements/`.
 
 ### Phase 3 — Implementation (if requested)
 
@@ -52,4 +60,4 @@ Report: what checked, any issues found/fixed.
 - Eksploruj kod zamiast pytać, gdy można znaleźć odpowiedź samemu
 - Krótko — jedna myśl na zdanie
 - Nie komentuj własnego procesu planowania
-- Nie pytaj o format outputu — zawsze `plan-output`
+- Zawsze pytaj o format outputu: `plan-output` vs `plan-output-script`
