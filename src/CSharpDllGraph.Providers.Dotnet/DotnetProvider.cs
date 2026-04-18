@@ -392,7 +392,7 @@ public sealed class DotnetProvider : IGraphProvider
             collector.AddNode(assemblyNode);
             collector.AddContainsEdge(packageNodeId, assemblyNode.Id);
 
-            var loadContext = new AssemblyLoadContext($"dotnet-provider-{Guid.NewGuid():N}", isCollectible: true);
+            var loadContext = new NuGetAssemblyLoadContext(package.PackageFolders);
             try
             {
                 var assembly = loadContext.LoadFromAssemblyPath(dllPath);
@@ -428,8 +428,21 @@ public sealed class DotnetProvider : IGraphProvider
         Assembly assembly,
         GraphCollector collector)
     {
-        var exportedTypes = assembly
-            .GetExportedTypes()
+        Type[] rawExportedTypes;
+        try
+        {
+            rawExportedTypes = assembly.GetExportedTypes();
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            rawExportedTypes = ex.Types.Where(static t => t is not null).ToArray()!;
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or FileLoadException or BadImageFormatException or TypeLoadException)
+        {
+            rawExportedTypes = [];
+        }
+
+        var exportedTypes = rawExportedTypes
             .Where(static type => !HasCompilerGeneratedMarker(type))
             .OrderBy(static type => GetTypeIdentifier(type), StringComparer.Ordinal)
             .ToArray();
@@ -496,7 +509,18 @@ public sealed class DotnetProvider : IGraphProvider
                     continue;
                 }
 
-                var methodIdentifier = GetMethodIdentifier(typeIdentifier, method);
+                string methodIdentifier;
+                string methodSignature;
+                try
+                {
+                    methodIdentifier = GetMethodIdentifier(typeIdentifier, method);
+                    methodSignature = GetMethodSignature(typeIdentifier, method);
+                }
+                catch (Exception ex) when (ex is FileNotFoundException or FileLoadException or BadImageFormatException or TypeLoadException)
+                {
+                    continue;
+                }
+
                 collector.AddNode(
                     Node.Create(
                         new NodeId(NodeKind.Method, methodIdentifier, packageVersion),
@@ -505,7 +529,7 @@ public sealed class DotnetProvider : IGraphProvider
                         new Dictionary<string, JsonElement>(StringComparer.Ordinal)
                         {
                             ["declaringType"] = JsonSerializer.SerializeToElement(typeIdentifier),
-                            ["signature"] = JsonSerializer.SerializeToElement(GetMethodSignature(typeIdentifier, method))
+                            ["signature"] = JsonSerializer.SerializeToElement(methodSignature)
                         }));
                 collector.AddContainsEdge(typeNodeId, new NodeId(NodeKind.Method, methodIdentifier, packageVersion));
             }
@@ -726,6 +750,46 @@ public sealed class DotnetProvider : IGraphProvider
             }
 
             return new PackageIdentity(value[..separator], value[(separator + 1)..]);
+        }
+    }
+
+    private sealed class NuGetAssemblyLoadContext : AssemblyLoadContext
+    {
+        private readonly IReadOnlyCollection<string> _packageFolders;
+
+        public NuGetAssemblyLoadContext(IReadOnlyCollection<string> packageFolders)
+            : base($"dotnet-provider-{Guid.NewGuid():N}", isCollectible: true)
+        {
+            _packageFolders = packageFolders;
+        }
+
+        protected override Assembly? Load(AssemblyName assemblyName)
+        {
+            if (assemblyName.Name is null)
+            {
+                return null;
+            }
+
+            foreach (var folder in _packageFolders)
+            {
+                foreach (var dll in Directory.EnumerateFiles(folder, $"{assemblyName.Name}.dll", SearchOption.AllDirectories))
+                {
+                    try
+                    {
+                        var candidate = AssemblyName.GetAssemblyName(dll);
+                        if (string.Equals(candidate.Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return LoadFromAssemblyPath(dll);
+                        }
+                    }
+                    catch (BadImageFormatException)
+                    {
+                        // not a managed assembly
+                    }
+                }
+            }
+
+            return null;
         }
     }
 

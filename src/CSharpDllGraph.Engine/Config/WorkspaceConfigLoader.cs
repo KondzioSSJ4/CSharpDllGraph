@@ -11,12 +11,15 @@ public static class WorkspaceConfigLoader
         PropertyNameCaseInsensitive = true
     };
 
-    public static WorkspaceConfig Load(string? cliWorkspacePath)
+    public static WorkspaceConfig Load(string? cliWorkspacePath, string? cliSolutionPath = null)
     {
         if (!string.IsNullOrWhiteSpace(cliWorkspacePath))
         {
             var rootPath = Path.GetFullPath(cliWorkspacePath);
-            return new WorkspaceConfig(rootPath, solutionPath: null);
+            var solutionPathOverride = string.IsNullOrWhiteSpace(cliSolutionPath)
+                ? null
+                : Path.GetFullPath(cliSolutionPath);
+            return new WorkspaceConfig(rootPath, solutionPath: solutionPathOverride);
         }
 
         var configPath = FindConfigPath(Directory.GetCurrentDirectory());

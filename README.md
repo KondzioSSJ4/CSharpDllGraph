@@ -113,6 +113,12 @@ Pass a workspace explicitly:
 dotnet run --project src/CSharpDllGraph.Mcp -- --workspace-path /absolute/path/to/your/project
 ```
 
+Pass a specific solution file when the workspace contains multiple `.sln` or `.slnx` files:
+
+```bash
+dotnet run --project src/CSharpDllGraph.Mcp -- --workspace-path /absolute/path/to/your/project --solution-path /absolute/path/to/your/project/YourSolution.sln
+```
+
 Important:
 
 - the default log file is `src/CSharpDllGraph.Mcp/logs/mcp-actions.log` when started from that project folder
@@ -126,7 +132,7 @@ The MCP server resolves the target workspace from one of two sources:
 
 Priority:
 
-- `--workspace-path` overrides `.csharpdllgraph.json`
+- `--workspace-path` and `--solution-path` override `.csharpdllgraph.json`
 
 If `--workspace-path` is not passed, the server searches from the current working directory upward for `.csharpdllgraph.json`.
 
@@ -196,6 +202,29 @@ Example with `--workspace-path`:
         "--",
         "--workspace-path",
         "C:\\absolute\\path\\to\\your\\project"
+      ],
+      "env": {}
+    }
+  }
+}
+```
+
+When the workspace contains multiple solution files, add `--solution-path`:
+
+```json
+{
+  "mcpServers": {
+    "csharpdllgraph": {
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "D:\\GIT\\CSharpDllGraph\\src\\CSharpDllGraph.Mcp",
+        "--",
+        "--workspace-path",
+        "C:\\absolute\\path\\to\\your\\project",
+        "--solution-path",
+        "C:\\absolute\\path\\to\\your\\project\\YourSolution.sln"
       ],
       "env": {}
     }

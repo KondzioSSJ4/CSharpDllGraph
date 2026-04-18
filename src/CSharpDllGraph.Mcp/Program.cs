@@ -14,12 +14,13 @@ using Microsoft.Extensions.Logging;
 
 RoslynBootstrap.EnsureRegistered();
 
-var cliWorkspacePath = TryGetWorkspacePath(args);
+var cliWorkspacePath = TryGetArg(args, "--workspace-path");
+var cliSolutionPath = TryGetArg(args, "--solution-path");
 WorkspaceConfig workspaceConfig;
 
 try
 {
-    workspaceConfig = WorkspaceConfigLoader.Load(cliWorkspacePath);
+    workspaceConfig = WorkspaceConfigLoader.Load(cliWorkspacePath, cliSolutionPath);
 }
 catch (Exception ex)
 {
@@ -66,18 +67,18 @@ builder.Services
 var host = builder.Build();
 await host.RunAsync();
 
-static string? TryGetWorkspacePath(string[] args)
+static string? TryGetArg(string[] args, string option)
 {
     for (var index = 0; index < args.Length; index++)
     {
-        if (!string.Equals(args[index], "--workspace-path", StringComparison.Ordinal))
+        if (!string.Equals(args[index], option, StringComparison.Ordinal))
         {
             continue;
         }
 
         if (index == args.Length - 1 || string.IsNullOrWhiteSpace(args[index + 1]))
         {
-            throw new InvalidOperationException("Missing value for option '--workspace-path'.");
+            throw new InvalidOperationException($"Missing value for option '{option}'.");
         }
 
         return args[index + 1];
