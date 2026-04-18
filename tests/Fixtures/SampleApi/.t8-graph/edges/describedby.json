@@ -1,0 +1,39 @@
+{
+  "edges": [
+    {
+      "attributes": {},
+      "fromId": "HttpEndpoint:DELETE~0020~002Fapi~002Fusers~002F~007Bid~007D@openapi",
+      "kind": "DescribedBy",
+      "sourceRefs": [],
+      "toId": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~002F~007Bid~007D~0020DELETE@openapi"
+    },
+    {
+      "attributes": {},
+      "fromId": "HttpEndpoint:GET~0020~002Fapi~002Fhealth@openapi",
+      "kind": "DescribedBy",
+      "sourceRefs": [],
+      "toId": "ExternalRef:openapi.json~0023~002Fapi~002Fhealth~0020GET@openapi"
+    },
+    {
+      "attributes": {},
+      "fromId": "HttpEndpoint:GET~0020~002Fapi~002Fusers@openapi",
+      "kind": "DescribedBy",
+      "sourceRefs": [],
+      "toId": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~0020GET@openapi"
+    },
+    {
+      "attributes": {},
+      "fromId": "HttpEndpoint:GET~0020~002Fapi~002Fusers~002F~007Bid~007D@openapi",
+      "kind": "DescribedBy",
+      "sourceRefs": [],
+      "toId": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~002F~007Bid~007D~0020GET@openapi"
+    },
+    {
+      "attributes": {},
+      "fromId": "HttpEndpoint:POST~0020~002Fapi~002Fusers@openapi",
+      "kind": "DescribedBy",
+      "sourceRefs": [],
+      "toId": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~0020POST@openapi"
+    }
+  ]
+}

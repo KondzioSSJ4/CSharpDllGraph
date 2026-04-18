@@ -1,0 +1,54 @@
+{
+  "nodes": [
+    {
+      "attributes": {
+        "operationPath": "/api/health GET",
+        "specFile": "openapi.json"
+      },
+      "displayName": "openapi.json#/api/health GET",
+      "id": "ExternalRef:openapi.json~0023~002Fapi~002Fhealth~0020GET@openapi",
+      "kind": "ExternalRef",
+      "sourceRefs": []
+    },
+    {
+      "attributes": {
+        "operationPath": "/api/users GET",
+        "specFile": "openapi.json"
+      },
+      "displayName": "openapi.json#/api/users GET",
+      "id": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~0020GET@openapi",
+      "kind": "ExternalRef",
+      "sourceRefs": []
+    },
+    {
+      "attributes": {
+        "operationPath": "/api/users POST",
+        "specFile": "openapi.json"
+      },
+      "displayName": "openapi.json#/api/users POST",
+      "id": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~0020POST@openapi",
+      "kind": "ExternalRef",
+      "sourceRefs": []
+    },
+    {
+      "attributes": {
+        "operationPath": "/api/users/{id} DELETE",
+        "specFile": "openapi.json"
+      },
+      "displayName": "openapi.json#/api/users/{id} DELETE",
+      "id": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~002F~007Bid~007D~0020DELETE@openapi",
+      "kind": "ExternalRef",
+      "sourceRefs": []
+    },
+    {
+      "attributes": {
+        "operationPath": "/api/users/{id} GET",
+        "specFile": "openapi.json"
+      },
+      "displayName": "openapi.json#/api/users/{id} GET",
+      "id": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~002F~007Bid~007D~0020GET@openapi",
+      "kind": "ExternalRef",
+      "sourceRefs": []
+    }
+  ]
+}

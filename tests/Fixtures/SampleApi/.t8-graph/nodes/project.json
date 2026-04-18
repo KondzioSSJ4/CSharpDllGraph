@@ -1,0 +1,21 @@
+{
+  "nodes": [
+    {
+      "attributes": {
+        "projectPath": "SampleApi.csproj",
+        "targetFrameworks": [
+          "net9.0"
+        ]
+      },
+      "displayName": "SampleApi",
+      "id": "Project:SampleApi@project",
+      "kind": "Project",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.csproj",
+          "spans": []
+        }
+      ]
+    }
+  ]
+}

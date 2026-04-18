@@ -1,4 +1,4 @@
-# Plan: Phase 07 - CLI, Watcher, and Incremental Rebuild
+﻿# Plan: Phase 07 - CLI, Watcher, and Incremental Rebuild
 
 > Finish v1 with CLI flows, incremental rebuild, watcher, validation, doc sync.
 
@@ -20,7 +20,7 @@
 {
   "id": "T1",
   "title": "Add CLI command surface",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "backend-csharp",
   "dependsOn": [],
   "paths": [
@@ -46,7 +46,7 @@
 {
   "id": "T2",
   "title": "Track content hashes for incremental rebuild",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "backend-csharp",
   "dependsOn": [
     "T1"
@@ -74,7 +74,7 @@
 {
   "id": "T3",
   "title": "Apply edge-level incremental updates",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "backend-csharp",
   "dependsOn": [
     "T2"
@@ -102,7 +102,7 @@
 {
   "id": "T4",
   "title": "Add watcher mode",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "backend-csharp",
   "dependsOn": [
     "T3"
@@ -130,7 +130,7 @@
 {
   "id": "T5",
   "title": "Reuse MCP query layer from CLI",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "backend-csharp",
   "dependsOn": [
     "T1"
@@ -159,7 +159,7 @@
 {
   "id": "T6",
   "title": "Prove performance target",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "backend-testing",
   "dependsOn": [
     "T3",
@@ -189,8 +189,8 @@
 {
   "id": "T7",
   "title": "Pass final validate-stop gate",
-  "status": "[ ]",
-  "agent": "code-reviewer",
+  "status": "[x]",
+  "agent": "backend-testing",
   "dependsOn": [
     "T4",
     "T5",
@@ -202,12 +202,12 @@
     "tests/",
     "docs/REQUIREMENT_DEFINITION.md"
   ],
-  "goal": "Verify final CLI, watcher, and incremental rebuild behavior and produce the signed delivery summary.",
+  "goal": "Verify final CLI, watcher, and incremental rebuild behavior and produce the signed delivery summary without editing plan state.",
   "acceptance": [
     "CLI flows work end to end, incremental rebuild works on fixture data, watcher-driven updates are validated against the target or the shortfall is documented, and the signed final summary is printed."
   ],
   "steps": [
-    "Run the phase VALIDATE-STOP checklist from the phase plan and capture outcomes.",
+    "Run the phase VALIDATE-STOP checklist from the phase plan and capture outcomes without editing the phase plan file.",
     "Verify CLI build, update, query, and workspace flows end to end.",
     "Verify fixture incremental rebuild and watcher-driven updates.",
     "Print the signed final v1 delivery summary and stop for human direction."
@@ -221,7 +221,7 @@
 {
   "id": "T8",
   "title": "Sync product definition",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "docs-product",
   "dependsOn": [
     "T7"

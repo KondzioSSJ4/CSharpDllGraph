@@ -1,0 +1,206 @@
+{
+  "providerId": "openapi-spec",
+  "nodes": [
+    {
+      "attributes": {
+        "operationPath": "/api/health GET",
+        "specFile": "openapi.json"
+      },
+      "displayName": "openapi.json#/api/health GET",
+      "id": "ExternalRef:openapi.json~0023~002Fapi~002Fhealth~0020GET@openapi",
+      "kind": "ExternalRef",
+      "sourceRefs": []
+    },
+    {
+      "attributes": {
+        "operationPath": "/api/users GET",
+        "specFile": "openapi.json"
+      },
+      "displayName": "openapi.json#/api/users GET",
+      "id": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~0020GET@openapi",
+      "kind": "ExternalRef",
+      "sourceRefs": []
+    },
+    {
+      "attributes": {
+        "operationPath": "/api/users POST",
+        "specFile": "openapi.json"
+      },
+      "displayName": "openapi.json#/api/users POST",
+      "id": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~0020POST@openapi",
+      "kind": "ExternalRef",
+      "sourceRefs": []
+    },
+    {
+      "attributes": {
+        "operationPath": "/api/users/{id} DELETE",
+        "specFile": "openapi.json"
+      },
+      "displayName": "openapi.json#/api/users/{id} DELETE",
+      "id": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~002F~007Bid~007D~0020DELETE@openapi",
+      "kind": "ExternalRef",
+      "sourceRefs": []
+    },
+    {
+      "attributes": {
+        "operationPath": "/api/users/{id} GET",
+        "specFile": "openapi.json"
+      },
+      "displayName": "openapi.json#/api/users/{id} GET",
+      "id": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~002F~007Bid~007D~0020GET@openapi",
+      "kind": "ExternalRef",
+      "sourceRefs": []
+    },
+    {
+      "attributes": {
+        "httpMethod": "DELETE",
+        "operationId": "DeleteUser",
+        "routeTemplate": "/api/users/{id}",
+        "source": "openapi",
+        "summary": "Remove a user",
+        "tags": [
+          "Users"
+        ]
+      },
+      "displayName": "DELETE /api/users/{id}",
+      "id": "HttpEndpoint:DELETE~0020~002Fapi~002Fusers~002F~007Bid~007D@openapi",
+      "kind": "HttpEndpoint",
+      "sourceRefs": [
+        {
+          "file": "openapi.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "httpMethod": "GET",
+        "operationId": "GetHealth",
+        "routeTemplate": "/api/health",
+        "source": "openapi",
+        "summary": "Health check \u2014 openapi flavour",
+        "tags": [
+          "Diagnostics"
+        ]
+      },
+      "displayName": "GET /api/health",
+      "id": "HttpEndpoint:GET~0020~002Fapi~002Fhealth@openapi",
+      "kind": "HttpEndpoint",
+      "sourceRefs": [
+        {
+          "file": "openapi.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "httpMethod": "GET",
+        "operationId": "GetAllUsers",
+        "routeTemplate": "/api/users",
+        "schemaRefs": [
+          "User"
+        ],
+        "source": "openapi",
+        "summary": "List all users",
+        "tags": [
+          "Users"
+        ]
+      },
+      "displayName": "GET /api/users",
+      "id": "HttpEndpoint:GET~0020~002Fapi~002Fusers@openapi",
+      "kind": "HttpEndpoint",
+      "sourceRefs": [
+        {
+          "file": "openapi.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "httpMethod": "GET",
+        "operationId": "GetUserById",
+        "routeTemplate": "/api/users/{id}",
+        "schemaRefs": [
+          "User"
+        ],
+        "source": "openapi",
+        "summary": "Get user by identifier",
+        "tags": [
+          "Users"
+        ]
+      },
+      "displayName": "GET /api/users/{id}",
+      "id": "HttpEndpoint:GET~0020~002Fapi~002Fusers~002F~007Bid~007D@openapi",
+      "kind": "HttpEndpoint",
+      "sourceRefs": [
+        {
+          "file": "openapi.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "httpMethod": "POST",
+        "operationId": "CreateUser",
+        "routeTemplate": "/api/users",
+        "schemaRefs": [
+          "User"
+        ],
+        "source": "openapi",
+        "summary": "Create a new user (from spec)",
+        "tags": [
+          "Users"
+        ]
+      },
+      "displayName": "POST /api/users",
+      "id": "HttpEndpoint:POST~0020~002Fapi~002Fusers@openapi",
+      "kind": "HttpEndpoint",
+      "sourceRefs": [
+        {
+          "file": "openapi.json",
+          "spans": []
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "attributes": {},
+      "fromId": "HttpEndpoint:DELETE~0020~002Fapi~002Fusers~002F~007Bid~007D@openapi",
+      "kind": "DescribedBy",
+      "sourceRefs": [],
+      "toId": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~002F~007Bid~007D~0020DELETE@openapi"
+    },
+    {
+      "attributes": {},
+      "fromId": "HttpEndpoint:GET~0020~002Fapi~002Fhealth@openapi",
+      "kind": "DescribedBy",
+      "sourceRefs": [],
+      "toId": "ExternalRef:openapi.json~0023~002Fapi~002Fhealth~0020GET@openapi"
+    },
+    {
+      "attributes": {},
+      "fromId": "HttpEndpoint:GET~0020~002Fapi~002Fusers@openapi",
+      "kind": "DescribedBy",
+      "sourceRefs": [],
+      "toId": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~0020GET@openapi"
+    },
+    {
+      "attributes": {},
+      "fromId": "HttpEndpoint:GET~0020~002Fapi~002Fusers~002F~007Bid~007D@openapi",
+      "kind": "DescribedBy",
+      "sourceRefs": [],
+      "toId": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~002F~007Bid~007D~0020GET@openapi"
+    },
+    {
+      "attributes": {},
+      "fromId": "HttpEndpoint:POST~0020~002Fapi~002Fusers@openapi",
+      "kind": "DescribedBy",
+      "sourceRefs": [],
+      "toId": "ExternalRef:openapi.json~0023~002Fapi~002Fusers~0020POST@openapi"
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "providerId": "dotnet-controller-endpoints",
+  "nodes": [
+    {
+      "attributes": {
+        "actionName": "Delete",
+        "controllerType": "SampleApi.Controllers.UsersController",
+        "httpMethod": "DELETE",
+        "routeTemplate": "/api/users/{id}"
+      },
+      "displayName": "DELETE /api/users/{id}",
+      "id": "HttpEndpoint:DELETE~0020~002Fapi~002Fusers~002F~007Bid~007D@project-SampleApi",
+      "kind": "HttpEndpoint",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\Controllers\\UsersController.cs",
+          "spans": [
+            {
+              "endColumn": 6,
+              "endLine": 32,
+              "startColumn": 5,
+              "startLine": 28
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "actionName": "GetAll",
+        "controllerType": "SampleApi.Controllers.UsersController",
+        "httpMethod": "GET",
+        "responseTypes": [200
+        ],
+        "routeTemplate": "/api/users"
+      },
+      "displayName": "GET /api/users",
+      "id": "HttpEndpoint:GET~0020~002Fapi~002Fusers@project-SampleApi",
+      "kind": "HttpEndpoint",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\Controllers\\UsersController.cs",
+          "spans": [
+            {
+              "endColumn": 6,
+              "endLine": 14,
+              "startColumn": 5,
+              "startLine": 9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "actionName": "GetById",
+        "controllerType": "SampleApi.Controllers.UsersController",
+        "httpMethod": "GET",
+        "routeTemplate": "/api/users/{id}"
+      },
+      "displayName": "GET /api/users/{id}",
+      "id": "HttpEndpoint:GET~0020~002Fapi~002Fusers~002F~007Bid~007D@project-SampleApi",
+      "kind": "HttpEndpoint",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\Controllers\\UsersController.cs",
+          "spans": [
+            {
+              "endColumn": 6,
+              "endLine": 20,
+              "startColumn": 5,
+              "startLine": 16
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "actionName": "Create",
+        "controllerType": "SampleApi.Controllers.UsersController",
+        "httpMethod": "POST",
+        "routeTemplate": "/api/users"
+      },
+      "displayName": "POST /api/users",
+      "id": "HttpEndpoint:POST~0020~002Fapi~002Fusers@project-SampleApi",
+      "kind": "HttpEndpoint",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\Controllers\\UsersController.cs",
+          "spans": [
+            {
+              "endColumn": 6,
+              "endLine": 26,
+              "startColumn": 5,
+              "startLine": 22
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "attributes": {},
+      "fromId": "Method:SampleApi.Controllers.UsersController.Create~0028~0029@project-SampleApi",
+      "kind": "HandlesRoute",
+      "sourceRefs": [],
+      "toId": "HttpEndpoint:POST~0020~002Fapi~002Fusers@project-SampleApi"
+    },
+    {
+      "attributes": {},
+      "fromId": "Method:SampleApi.Controllers.UsersController.Delete~0028int~0029@project-SampleApi",
+      "kind": "HandlesRoute",
+      "sourceRefs": [],
+      "toId": "HttpEndpoint:DELETE~0020~002Fapi~002Fusers~002F~007Bid~007D@project-SampleApi"
+    },
+    {
+      "attributes": {},
+      "fromId": "Method:SampleApi.Controllers.UsersController.GetAll~0028~0029@project-SampleApi",
+      "kind": "HandlesRoute",
+      "sourceRefs": [],
+      "toId": "HttpEndpoint:GET~0020~002Fapi~002Fusers@project-SampleApi"
+    },
+    {
+      "attributes": {},
+      "fromId": "Method:SampleApi.Controllers.UsersController.GetById~0028int~0029@project-SampleApi",
+      "kind": "HandlesRoute",
+      "sourceRefs": [],
+      "toId": "HttpEndpoint:GET~0020~002Fapi~002Fusers~002F~007Bid~007D@project-SampleApi"
+    }
+  ]
+}

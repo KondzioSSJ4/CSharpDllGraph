@@ -1,0 +1,95 @@
+{
+  "providerId": "http-file-callsite",
+  "nodes": [
+    {
+      "attributes": {
+        "confidence": "high",
+        "headers": {
+          "Accept": "application/json"
+        },
+        "httpMethod": "GET",
+        "requestName": "listUsers",
+        "scanner": "http-file",
+        "sourceFile": "requests.http",
+        "sourceLine": 3,
+        "urlTemplate": "https://localhost:5001/api/users"
+      },
+      "displayName": "GET https://localhost:5001/api/users (listUsers)",
+      "id": "HttpCallSite:HTTP.GET.https~003A~002F~002Flocalhost~003A5001~002Fapi~002Fusers.44f58cc1.0@44f58cc1",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "requests.http",
+          "spans": [
+            {
+              "endColumn": 0,
+              "endLine": 3,
+              "startColumn": 0,
+              "startLine": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "confidence": "high",
+        "headers": {
+          "Accept": "application/json"
+        },
+        "httpMethod": "GET",
+        "requestName": "Get user by id",
+        "scanner": "http-file",
+        "sourceFile": "requests.http",
+        "sourceLine": 15,
+        "urlTemplate": "https://localhost:5001/api/users/{userId}"
+      },
+      "displayName": "GET https://localhost:5001/api/users/{userId} (Get user by id)",
+      "id": "HttpCallSite:HTTP.GET.https~003A~002F~002Flocalhost~003A5001~002Fapi~002Fusers~002F~007BuserId~007D.44f58cc1.2@44f58cc1",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "requests.http",
+          "spans": [
+            {
+              "endColumn": 0,
+              "endLine": 15,
+              "startColumn": 0,
+              "startLine": 15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "confidence": "high",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpMethod": "POST",
+        "scanner": "http-file",
+        "sourceFile": "requests.http",
+        "sourceLine": 7,
+        "urlTemplate": "https://localhost:5001/api/users"
+      },
+      "displayName": "POST https://localhost:5001/api/users",
+      "id": "HttpCallSite:HTTP.POST.https~003A~002F~002Flocalhost~003A5001~002Fapi~002Fusers.44f58cc1.1@44f58cc1",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "requests.http",
+          "spans": [
+            {
+              "endColumn": 0,
+              "endLine": 7,
+              "startColumn": 0,
+              "startLine": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "edges": []
+}

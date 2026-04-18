@@ -1,0 +1,224 @@
+{
+  "nodes": [
+    {
+      "attributes": {
+        "origin": "user",
+        "projectVersion": "project-SampleApi"
+      },
+      "displayName": "SampleApi.Controllers.UsersController.Create()@project-SampleApi",
+      "id": "Method:SampleApi.Controllers.UsersController.Create~0028~0029@project-SampleApi",
+      "kind": "Method",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\Controllers\\UsersController.cs",
+          "spans": [
+            {
+              "endColumn": 32,
+              "endLine": 23,
+              "startColumn": 26,
+              "startLine": 23
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "origin": "user",
+        "projectVersion": "project-SampleApi"
+      },
+      "displayName": "SampleApi.Controllers.UsersController.Delete(int)@project-SampleApi",
+      "id": "Method:SampleApi.Controllers.UsersController.Delete~0028int~0029@project-SampleApi",
+      "kind": "Method",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\Controllers\\UsersController.cs",
+          "spans": [
+            {
+              "endColumn": 32,
+              "endLine": 29,
+              "startColumn": 26,
+              "startLine": 29
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "origin": "user",
+        "projectVersion": "project-SampleApi"
+      },
+      "displayName": "SampleApi.Controllers.UsersController.GetAll()@project-SampleApi",
+      "id": "Method:SampleApi.Controllers.UsersController.GetAll~0028~0029@project-SampleApi",
+      "kind": "Method",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\Controllers\\UsersController.cs",
+          "spans": [
+            {
+              "endColumn": 32,
+              "endLine": 11,
+              "startColumn": 26,
+              "startLine": 11
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "origin": "user",
+        "projectVersion": "project-SampleApi"
+      },
+      "displayName": "SampleApi.Controllers.UsersController.GetById(int)@project-SampleApi",
+      "id": "Method:SampleApi.Controllers.UsersController.GetById~0028int~0029@project-SampleApi",
+      "kind": "Method",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\Controllers\\UsersController.cs",
+          "spans": [
+            {
+              "endColumn": 33,
+              "endLine": 17,
+              "startColumn": 26,
+              "startLine": 17
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "origin": "user",
+        "projectVersion": "project-SampleApi"
+      },
+      "displayName": "SampleApi.OrdersClient..ctor(System.Net.Http.HttpClient)@project-SampleApi",
+      "id": "Method:SampleApi.OrdersClient..ctor~0028System.Net.Http.HttpClient~0029@project-SampleApi",
+      "kind": "Method",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 24,
+              "endLine": 10,
+              "startColumn": 12,
+              "startLine": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "origin": "user",
+        "projectVersion": "project-SampleApi"
+      },
+      "displayName": "SampleApi.OrdersClient.DeleteOrderAsync(int)@project-SampleApi",
+      "id": "Method:SampleApi.OrdersClient.DeleteOrderAsync~0028int~0029@project-SampleApi",
+      "kind": "Method",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 33,
+              "endLine": 25,
+              "startColumn": 17,
+              "startLine": 25
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "origin": "user",
+        "projectVersion": "project-SampleApi"
+      },
+      "displayName": "SampleApi.OrdersClient.GetOrdersAsync()@project-SampleApi",
+      "id": "Method:SampleApi.OrdersClient.GetOrdersAsync~0028~0029@project-SampleApi",
+      "kind": "Method",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 31,
+              "endLine": 15,
+              "startColumn": 17,
+              "startLine": 15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "origin": "user",
+        "projectVersion": "project-SampleApi"
+      },
+      "displayName": "SampleApi.OrdersClient.SubmitOrderAsync(int)@project-SampleApi",
+      "id": "Method:SampleApi.OrdersClient.SubmitOrderAsync~0028int~0029@project-SampleApi",
+      "kind": "Method",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 33,
+              "endLine": 20,
+              "startColumn": 17,
+              "startLine": 20
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "origin": "lambda",
+        "projectVersion": "project-SampleApi"
+      },
+      "displayName": "lambda@Program-73b4690b:10@project-SampleApi",
+      "id": "Method:lambda~0040Program-73b4690b~003A10@project-SampleApi",
+      "kind": "Method",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\Program.cs",
+          "spans": [
+            {
+              "endColumn": 38,
+              "endLine": 10,
+              "startColumn": 26,
+              "startLine": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "origin": "lambda",
+        "projectVersion": "project-SampleApi"
+      },
+      "displayName": "lambda@Program-73b4690b:9@project-SampleApi",
+      "id": "Method:lambda~0040Program-73b4690b~003A9@project-SampleApi",
+      "kind": "Method",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\Program.cs",
+          "spans": [
+            {
+              "endColumn": 42,
+              "endLine": 9,
+              "startColumn": 27,
+              "startLine": 9
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

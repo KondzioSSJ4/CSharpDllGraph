@@ -1,0 +1,48 @@
+{
+  "nodes": [
+    {
+      "attributes": {
+        "origin": "user",
+        "projectVersion": "project-SampleApi"
+      },
+      "displayName": "SampleApi.Controllers.UsersController@project-SampleApi",
+      "id": "Type:SampleApi.Controllers.UsersController@project-SampleApi",
+      "kind": "Type",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\Controllers\\UsersController.cs",
+          "spans": [
+            {
+              "endColumn": 36,
+              "endLine": 7,
+              "startColumn": 21,
+              "startLine": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "origin": "user",
+        "projectVersion": "project-SampleApi"
+      },
+      "displayName": "SampleApi.OrdersClient@project-SampleApi",
+      "id": "Type:SampleApi.OrdersClient@project-SampleApi",
+      "kind": "Type",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 33,
+              "endLine": 6,
+              "startColumn": 21,
+              "startLine": 6
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

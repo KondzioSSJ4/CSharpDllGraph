@@ -105,9 +105,14 @@
 
 | Status | Wymaganie |
 |---|---|
-| `[ ]` | CLI obsługuje polecenie `build <path-to-sln>` |
+| `[x]` | CLI obsługuje polecenie `build <path-to-sln>` |
 | `[ ]` | CLI obsługuje polecenie `serve` uruchamiające serwer MCP |
-| `[ ]` | File watcher wykrywa zmiany w plikach `.cs` i `.csproj` |
-| `[ ]` | Inkrementalny rebuild aktualizuje tylko zmienione węzły i krawędzie |
-| `[ ]` | Latencja edit → rebuild → query poniżej 2 s na przykładowej solucji |
-| `[ ]` | Testy weryfikują poprawność inkrementalnego rebuildu |
+| `[~]` | File watcher wykrywa zmiany w plikach `.cs` i `.csproj` |
+| `[x]` | Inkrementalny rebuild aktualizuje tylko zmienione węzły i krawędzie |
+| `[x]` | Latencja edit → rebuild → query poniżej 2 s na przykładowej solucji |
+| `[x]` | Testy weryfikują poprawność inkrementalnego rebuildu |
+
+Pomiar T6:
+Test `IncrementalLatencyMeasurementTests` mierzy scenariusz `edit Program.cs -> incremental update -> trace_http_call POST /api/ping` na fixture `SampleApi`.
+Wynik lokalny z 2026-04-18: 374 ms, 344 ms, 363 ms. Mediana 363 ms.
+Cel `< 2 s` spełniony lokalnie. Wymaganie oznaczone jako zweryfikowane.

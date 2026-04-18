@@ -1,0 +1,304 @@
+{
+  "nodes": [
+    {
+      "attributes": {
+        "callingMethod": "SampleApi.OrdersClient.DeleteOrderAsync(int)",
+        "confidence": "medium",
+        "httpMethod": "DELETE",
+        "urlTemplate": "/api/orders/unknown"
+      },
+      "displayName": "DELETE /api/orders/unknown",
+      "id": "HttpCallSite:DELETE~0020~002Fapi~002Forders~002Funknown~00402dc05e8c@project-SampleApi",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 65,
+              "endLine": 27,
+              "startColumn": 16,
+              "startLine": 27
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "callingMethod": "SampleApi.OrdersClient.GetOrdersAsync()",
+        "confidence": "high",
+        "httpMethod": "GET",
+        "urlTemplate": "/api/orders"
+      },
+      "displayName": "GET /api/orders",
+      "id": "HttpCallSite:GET~0020~002Fapi~002Forders~0040cb14a03a@project-SampleApi",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 51,
+              "endLine": 17,
+              "startColumn": 16,
+              "startLine": 17
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "confidence": "high",
+        "headers": {
+          "Accept": "application/json"
+        },
+        "httpMethod": "GET",
+        "requestName": "listUsers",
+        "scanner": "http-file",
+        "sourceFile": "requests.http",
+        "sourceLine": 3,
+        "urlTemplate": "https://localhost:5001/api/users"
+      },
+      "displayName": "GET https://localhost:5001/api/users (listUsers)",
+      "id": "HttpCallSite:HTTP.GET.https~003A~002F~002Flocalhost~003A5001~002Fapi~002Fusers.44f58cc1.0@44f58cc1",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "requests.http",
+          "spans": [
+            {
+              "endColumn": 0,
+              "endLine": 3,
+              "startColumn": 0,
+              "startLine": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "confidence": "high",
+        "headers": {
+          "Accept": "application/json"
+        },
+        "httpMethod": "GET",
+        "requestName": "Get user by id",
+        "scanner": "http-file",
+        "sourceFile": "requests.http",
+        "sourceLine": 15,
+        "urlTemplate": "https://localhost:5001/api/users/{userId}"
+      },
+      "displayName": "GET https://localhost:5001/api/users/{userId} (Get user by id)",
+      "id": "HttpCallSite:HTTP.GET.https~003A~002F~002Flocalhost~003A5001~002Fapi~002Fusers~002F~007BuserId~007D.44f58cc1.2@44f58cc1",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "requests.http",
+          "spans": [
+            {
+              "endColumn": 0,
+              "endLine": 15,
+              "startColumn": 0,
+              "startLine": 15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "confidence": "high",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "httpMethod": "POST",
+        "scanner": "http-file",
+        "sourceFile": "requests.http",
+        "sourceLine": 7,
+        "urlTemplate": "https://localhost:5001/api/users"
+      },
+      "displayName": "POST https://localhost:5001/api/users",
+      "id": "HttpCallSite:HTTP.POST.https~003A~002F~002Flocalhost~003A5001~002Fapi~002Fusers.44f58cc1.1@44f58cc1",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "requests.http",
+          "spans": [
+            {
+              "endColumn": 0,
+              "endLine": 7,
+              "startColumn": 0,
+              "startLine": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "callingMethod": "SampleApi.OrdersClient.SubmitOrderAsync(int)",
+        "confidence": "high",
+        "httpMethod": "POST",
+        "urlTemplate": "/api/orders/{var}/submit"
+      },
+      "displayName": "POST /api/orders/{var}/submit",
+      "id": "HttpCallSite:POST~0020~002Fapi~002Forders~002F~007Bvar~007D~002Fsubmit~0040ce4ae3fa@project-SampleApi",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 76,
+              "endLine": 22,
+              "startColumn": 16,
+              "startLine": 22
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "folderPath": "Users",
+        "httpMethod": "DELETE",
+        "requestName": "Delete user",
+        "scanner": "postman",
+        "urlTemplate": "/api/users/{userId}"
+      },
+      "displayName": "DELETE /api/users/{userId}",
+      "id": "HttpCallSite:Postman.DELETE.~002Fapi~002Fusers~002F~007BuserId~007D.ef4dc803.Delete~0020user@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "httpMethod": "GET",
+        "requestName": "Health check",
+        "scanner": "postman",
+        "urlTemplate": "/api/health"
+      },
+      "displayName": "GET /api/health",
+      "id": "HttpCallSite:Postman.GET.~002Fapi~002Fhealth.ef4dc803.Health~0020check@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "folderPath": "Orders",
+        "httpMethod": "GET",
+        "requestName": "Get orders",
+        "scanner": "postman",
+        "urlTemplate": "/api/orders"
+      },
+      "displayName": "GET /api/orders",
+      "id": "HttpCallSite:Postman.GET.~002Fapi~002Forders.ef4dc803.Get~0020orders@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "folderPath": "Users",
+        "httpMethod": "GET",
+        "requestName": "Get all users",
+        "scanner": "postman",
+        "urlTemplate": "/api/users"
+      },
+      "displayName": "GET /api/users",
+      "id": "HttpCallSite:Postman.GET.~002Fapi~002Fusers.ef4dc803.Get~0020all~0020users@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "folderPath": "Users",
+        "httpMethod": "GET",
+        "requestName": "Get user by id",
+        "scanner": "postman",
+        "urlTemplate": "/api/users/{userId}"
+      },
+      "displayName": "GET /api/users/{userId}",
+      "id": "HttpCallSite:Postman.GET.~002Fapi~002Fusers~002F~007BuserId~007D.ef4dc803.Get~0020user~0020by~0020id@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "folderPath": "Orders",
+        "httpMethod": "POST",
+        "requestName": "Submit order",
+        "scanner": "postman",
+        "urlTemplate": "/api/orders/{orderId}/submit"
+      },
+      "displayName": "POST /api/orders/{orderId}/submit",
+      "id": "HttpCallSite:Postman.POST.~002Fapi~002Forders~002F~007BorderId~007D~002Fsubmit.ef4dc803.Submit~0020order@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "folderPath": "Users",
+        "httpMethod": "POST",
+        "requestName": "Create user",
+        "scanner": "postman",
+        "urlTemplate": "/api/users"
+      },
+      "displayName": "POST /api/users",
+      "id": "HttpCallSite:Postman.POST.~002Fapi~002Fusers.ef4dc803.Create~0020user@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    }
+  ]
+}

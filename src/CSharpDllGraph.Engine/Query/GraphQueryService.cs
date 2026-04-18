@@ -12,12 +12,16 @@ public sealed class GraphQueryService(
     ICrossWorkspaceHttpIndexBuilder crossWorkspaceHttpIndexBuilder) : IGraphQueryService
 {
     public async Task<DescribePackageApiResult> DescribePackageApiAsync(
-        string package,
-        string version,
-        string? tfm = null,
-        string? filter = null,
+        DescribePackageApiRequest request,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var package = request.Package;
+        var version = request.Version;
+        var tfm = request.TargetFramework;
+        var filter = request.Filter;
+
         ValidateRequired(package, nameof(package));
         ValidateRequired(version, nameof(version));
 
@@ -65,10 +69,13 @@ public sealed class GraphQueryService(
     }
 
     public async Task<ListDependenciesResult> ListDependenciesAsync(
-        string workspace,
-        string? project = null,
+        ListDependenciesRequest request,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var workspace = request.Workspace;
+        var project = request.Project;
         var registration = workspaceRegistry.Resolve(workspace);
         var normalizedProject = NormalizeOptional(project);
         var query = await LoadWorkspaceQueryAsync(registration, cancellationToken);
@@ -87,9 +94,12 @@ public sealed class GraphQueryService(
     }
 
     public async Task<FindVersionConflictsResult> FindVersionConflictsAsync(
-        string workspace,
+        FindVersionConflictsRequest request,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var workspace = request.Workspace;
         var registration = workspaceRegistry.Resolve(workspace);
         var query = await LoadWorkspaceQueryAsync(registration, cancellationToken);
 
@@ -139,13 +149,16 @@ public sealed class GraphQueryService(
     }
 
     public async Task<FindUsagesResult> FindUsagesAsync(
-        string? symbolId = null,
-        string? kind = null,
-        string? fullName = null,
-        string? version = null,
-        IReadOnlyList<string>? workspaces = null,
+        FindUsagesRequest request,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var symbolId = request.SymbolId;
+        var kind = request.Kind;
+        var fullName = request.FullName;
+        var version = request.Version;
+        var workspaces = request.Workspaces;
         var normalizedSymbolId = NormalizeOptional(symbolId);
         var normalizedKind = NormalizeOptional(kind);
         var normalizedFullName = NormalizeOptional(fullName);
@@ -178,14 +191,17 @@ public sealed class GraphQueryService(
     }
 
     public async Task<SuggestUsageResult> SuggestUsageAsync(
-        string? symbolId = null,
-        string? kind = null,
-        string? fullName = null,
-        string? version = null,
-        IReadOnlyList<string>? workspaces = null,
-        int maxResults = 5,
+        SuggestUsageRequest request,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var symbolId = request.SymbolId;
+        var kind = request.Kind;
+        var fullName = request.FullName;
+        var version = request.Version;
+        var workspaces = request.Workspaces;
+        var maxResults = request.MaxResults;
         var normalizedSymbolId = NormalizeOptional(symbolId);
         var normalizedKind = NormalizeOptional(kind);
         var normalizedFullName = NormalizeOptional(fullName);
@@ -312,11 +328,14 @@ public sealed class GraphQueryService(
     }
 
     public async Task<TraceHttpCallResult> TraceHttpCallAsync(
-        string method,
-        string path,
-        IReadOnlyList<string>? workspaces = null,
+        TraceHttpCallRequest request,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var method = request.Method;
+        var path = request.Path;
+        var workspaces = request.Workspaces;
         var result = await TraceHttpCallInternalAsync(method, path, workspaces, cancellationToken);
         return new TraceHttpCallResult(result.Method, result.Path, result.Producers, result.Consumers);
     }

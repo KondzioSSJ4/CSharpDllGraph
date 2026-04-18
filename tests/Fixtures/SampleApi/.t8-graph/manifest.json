@@ -1,0 +1,16 @@
+{
+  "contentHashes": {
+    "dependency:obj/project.assets.json": "1e747d3b59bd83092c1b6a29e8b11d5af0e4d8d49d237300d1cf676ea57c554b",
+    "http-spec:SampleApi.postman_collection.json": "22cc62d67af269f548da76e4a7402aadbd6612e9255dde4a08328cd4eb4421d8",
+    "http-spec:openapi.json": "04ea98f211bc30066f0ba31aa23a0522f099a5691346d6c980a84b4ed60db56c",
+    "http-spec:requests.http": "3f334ecd601b07a725febb674ca5ce48e5346b9b4a6e748d2837b649d9e20e2f",
+    "project:SampleApi.csproj": "96a950d513be508d05844aa0d22c1669a447fea8d27a1a1bde75c48753d74681",
+    "project:SampleApi.slnx": "a9793dc438ead6fc3628bfedd853a3be85bfd4da8940467bf5e811a7859510cb",
+    "source:Controllers/UsersController.cs": "a757aeea6a55065595584d0e70207837a6742fe31e26309be7ebca7b728b487c",
+    "source:OrdersClient.cs": "c1a9b3449f3486d3d5a09dea1760c9f4baaf44dbaba1ad36622a04a058426aa6",
+    "source:Program.cs": "be7002d69306179e01b9f1aac32c0a066c4a0115d4dea731a2226660b04bc6a4"
+  },
+  "engineVersion": "phase-03",
+  "lastBuildUtc": "2026-04-18T15:17:40.1570218+00:00",
+  "schemaVersion": "phase-03"
+}

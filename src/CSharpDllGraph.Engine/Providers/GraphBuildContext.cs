@@ -1,8 +1,8 @@
 namespace CSharpDllGraph.Engine.Providers;
 
-public sealed record GraphBuildContext(string SolutionPath, string WorkspaceRootPath)
+public sealed record GraphBuildContext(string SolutionPath, string WorkspaceRootPath, bool IsUpdate)
 {
-    public static GraphBuildContext Create(string solutionPath, string workspaceRootPath)
+    public static GraphBuildContext Create(string solutionPath, string workspaceRootPath, bool isUpdate = false)
     {
         if (string.IsNullOrWhiteSpace(solutionPath))
         {
@@ -16,6 +16,7 @@ public sealed record GraphBuildContext(string SolutionPath, string WorkspaceRoot
 
         return new GraphBuildContext(
             Path.GetFullPath(solutionPath),
-            Path.GetFullPath(workspaceRootPath));
+            Path.GetFullPath(workspaceRootPath),
+            isUpdate);
     }
 }

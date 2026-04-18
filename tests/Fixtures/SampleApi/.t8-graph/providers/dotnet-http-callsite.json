@@ -1,0 +1,136 @@
+{
+  "providerId": "dotnet-http-callsite",
+  "nodes": [
+    {
+      "attributes": {
+        "callingMethod": "SampleApi.OrdersClient.DeleteOrderAsync(int)",
+        "confidence": "medium",
+        "httpMethod": "DELETE",
+        "urlTemplate": "/api/orders/unknown"
+      },
+      "displayName": "DELETE /api/orders/unknown",
+      "id": "HttpCallSite:DELETE~0020~002Fapi~002Forders~002Funknown~00402dc05e8c@project-SampleApi",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 65,
+              "endLine": 27,
+              "startColumn": 16,
+              "startLine": 27
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "callingMethod": "SampleApi.OrdersClient.GetOrdersAsync()",
+        "confidence": "high",
+        "httpMethod": "GET",
+        "urlTemplate": "/api/orders"
+      },
+      "displayName": "GET /api/orders",
+      "id": "HttpCallSite:GET~0020~002Fapi~002Forders~0040cb14a03a@project-SampleApi",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 51,
+              "endLine": 17,
+              "startColumn": 16,
+              "startLine": 17
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "callingMethod": "SampleApi.OrdersClient.SubmitOrderAsync(int)",
+        "confidence": "high",
+        "httpMethod": "POST",
+        "urlTemplate": "/api/orders/{var}/submit"
+      },
+      "displayName": "POST /api/orders/{var}/submit",
+      "id": "HttpCallSite:POST~0020~002Fapi~002Forders~002F~007Bvar~007D~002Fsubmit~0040ce4ae3fa@project-SampleApi",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 76,
+              "endLine": 22,
+              "startColumn": 16,
+              "startLine": 22
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "attributes": {},
+      "fromId": "Method:SampleApi.OrdersClient.DeleteOrderAsync~0028int~0029@project-SampleApi",
+      "kind": "CallsRoute",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 65,
+              "endLine": 27,
+              "startColumn": 16,
+              "startLine": 27
+            }
+          ]
+        }
+      ],
+      "toId": "HttpCallSite:DELETE~0020~002Fapi~002Forders~002Funknown~00402dc05e8c@project-SampleApi"
+    },
+    {
+      "attributes": {},
+      "fromId": "Method:SampleApi.OrdersClient.GetOrdersAsync~0028~0029@project-SampleApi",
+      "kind": "CallsRoute",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 51,
+              "endLine": 17,
+              "startColumn": 16,
+              "startLine": 17
+            }
+          ]
+        }
+      ],
+      "toId": "HttpCallSite:GET~0020~002Fapi~002Forders~0040cb14a03a@project-SampleApi"
+    },
+    {
+      "attributes": {},
+      "fromId": "Method:SampleApi.OrdersClient.SubmitOrderAsync~0028int~0029@project-SampleApi",
+      "kind": "CallsRoute",
+      "sourceRefs": [
+        {
+          "file": "D:\\GIT\\CSharpDllGraph\\tests\\Fixtures\\SampleApi\\OrdersClient.cs",
+          "spans": [
+            {
+              "endColumn": 76,
+              "endLine": 22,
+              "startColumn": 16,
+              "startLine": 22
+            }
+          ]
+        }
+      ],
+      "toId": "HttpCallSite:POST~0020~002Fapi~002Forders~002F~007Bvar~007D~002Fsubmit~0040ce4ae3fa@project-SampleApi"
+    }
+  ]
+}

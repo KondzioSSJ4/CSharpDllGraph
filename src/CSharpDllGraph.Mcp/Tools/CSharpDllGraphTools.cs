@@ -27,7 +27,9 @@ internal sealed class CSharpDllGraphTools(IGraphQueryService graphQueryService)
         [Description("Optional regex filter applied to type and method names.")] string? filter = null,
         CancellationToken cancellationToken = default)
     {
-        return graphQueryService.DescribePackageApiAsync(package, version, tfm, filter, cancellationToken);
+        return graphQueryService.DescribePackageApiAsync(
+            new DescribePackageApiRequest(package, version, tfm, filter),
+            cancellationToken);
     }
 
     /// <summary>
@@ -43,7 +45,9 @@ internal sealed class CSharpDllGraphTools(IGraphQueryService graphQueryService)
         [Description("Optional project name or relative project path filter.")] string? project = null,
         CancellationToken cancellationToken = default)
     {
-        return graphQueryService.ListDependenciesAsync(workspace, project, cancellationToken);
+        return graphQueryService.ListDependenciesAsync(
+            new ListDependenciesRequest(workspace, project),
+            cancellationToken);
     }
 
     /// <summary>
@@ -57,7 +61,9 @@ internal sealed class CSharpDllGraphTools(IGraphQueryService graphQueryService)
         [Description("Registered workspace name.")] string workspace,
         CancellationToken cancellationToken = default)
     {
-        return graphQueryService.FindVersionConflictsAsync(workspace, cancellationToken);
+        return graphQueryService.FindVersionConflictsAsync(
+            new FindVersionConflictsRequest(workspace),
+            cancellationToken);
     }
 
     /// <summary>
@@ -79,7 +85,9 @@ internal sealed class CSharpDllGraphTools(IGraphQueryService graphQueryService)
         [Description("Optional workspace filter. Omit or pass all to search every registered workspace.")] string[]? workspaces = null,
         CancellationToken cancellationToken = default)
     {
-        return graphQueryService.FindUsagesAsync(symbolId, kind, fullName, version, workspaces, cancellationToken);
+        return graphQueryService.FindUsagesAsync(
+            new FindUsagesRequest(symbolId, kind, fullName, version, workspaces),
+            cancellationToken);
     }
 
     /// <summary>
@@ -103,7 +111,9 @@ internal sealed class CSharpDllGraphTools(IGraphQueryService graphQueryService)
         [Description("Maximum number of ranked suggestions to return.")] int maxResults = 5,
         CancellationToken cancellationToken = default)
     {
-        return graphQueryService.SuggestUsageAsync(symbolId, kind, fullName, version, workspaces, maxResults, cancellationToken);
+        return graphQueryService.SuggestUsageAsync(
+            new SuggestUsageRequest(symbolId, kind, fullName, version, workspaces, maxResults),
+            cancellationToken);
     }
 
     /// <summary>
@@ -121,6 +131,8 @@ internal sealed class CSharpDllGraphTools(IGraphQueryService graphQueryService)
         [Description("Optional workspace filter. Omit or pass all to search every registered workspace.")] string[]? workspaces = null,
         CancellationToken cancellationToken = default)
     {
-        return graphQueryService.TraceHttpCallAsync(method, path, workspaces, cancellationToken);
+        return graphQueryService.TraceHttpCallAsync(
+            new TraceHttpCallRequest(method, path, workspaces),
+            cancellationToken);
     }
 }

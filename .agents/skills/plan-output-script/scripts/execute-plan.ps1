@@ -167,6 +167,20 @@ function ConvertTo-PrettyJson {
     return ($Value | ConvertTo-Json -Depth 20)
 }
 
+function Reset-InProgressTasks {
+    param([Parameter(Mandatory = $true)][hashtable]$PlanData)
+
+    $changed = $false
+    foreach ($task in $PlanData.Tasks) {
+        if ($task.status -eq '[~]') {
+            $task.status = '[ ]'
+            $changed = $true
+        }
+    }
+
+    return $changed
+}
+
 function Save-PlanData {
     param(
         [Parameter(Mandatory = $true)][hashtable]$PlanData,
@@ -424,6 +438,11 @@ $resolvedPlan = Resolve-PlanFile -PlanValue $Plan -RepoRoot $script:RepoRoot
 $planData = Get-PlanData -PlanPath $resolvedPlan
 Validate-PlanData -PlanData $planData
 
+$resetChanged = Reset-InProgressTasks -PlanData $planData
+if ($resetChanged) {
+    Save-PlanData -PlanData $planData -PlanPath $resolvedPlan
+}
+
 $resolvedProvider = if ($Provider) { $Provider } elseif ($planData.Meta.provider) { [string]$planData.Meta.provider } else { 'codex' }
 $resolvedModel = if ($PSBoundParameters.ContainsKey('Model')) { $Model } elseif ($planData.Meta.model) { [string]$planData.Meta.model } else { '' }
 $parallelLimit = if ($PSBoundParameters.ContainsKey('MaxParallel')) { $MaxParallel } elseif ($planData.Meta.maxParallel) { [int]$planData.Meta.maxParallel } else { 1 }
@@ -435,6 +454,9 @@ Write-Host "Plan file: $resolvedPlan"
 Write-Host "Provider: $resolvedProvider"
 Write-Host "Model: $(if ($resolvedModel) { $resolvedModel } else { '<default>' })"
 Write-Host "MaxParallel: $parallelLimit"
+if ($resetChanged) {
+    Write-Host "Recovered in-progress tasks: reset [~] to [ ]"
+}
 
 if ($DryRun) {
     Write-Host "Dry run. No agents started."

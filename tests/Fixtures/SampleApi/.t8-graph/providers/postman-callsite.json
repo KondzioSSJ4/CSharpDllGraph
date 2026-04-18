@@ -1,0 +1,145 @@
+{
+  "providerId": "postman-callsite",
+  "nodes": [
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "folderPath": "Users",
+        "httpMethod": "DELETE",
+        "requestName": "Delete user",
+        "scanner": "postman",
+        "urlTemplate": "/api/users/{userId}"
+      },
+      "displayName": "DELETE /api/users/{userId}",
+      "id": "HttpCallSite:Postman.DELETE.~002Fapi~002Fusers~002F~007BuserId~007D.ef4dc803.Delete~0020user@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "httpMethod": "GET",
+        "requestName": "Health check",
+        "scanner": "postman",
+        "urlTemplate": "/api/health"
+      },
+      "displayName": "GET /api/health",
+      "id": "HttpCallSite:Postman.GET.~002Fapi~002Fhealth.ef4dc803.Health~0020check@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "folderPath": "Orders",
+        "httpMethod": "GET",
+        "requestName": "Get orders",
+        "scanner": "postman",
+        "urlTemplate": "/api/orders"
+      },
+      "displayName": "GET /api/orders",
+      "id": "HttpCallSite:Postman.GET.~002Fapi~002Forders.ef4dc803.Get~0020orders@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "folderPath": "Users",
+        "httpMethod": "GET",
+        "requestName": "Get all users",
+        "scanner": "postman",
+        "urlTemplate": "/api/users"
+      },
+      "displayName": "GET /api/users",
+      "id": "HttpCallSite:Postman.GET.~002Fapi~002Fusers.ef4dc803.Get~0020all~0020users@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "folderPath": "Users",
+        "httpMethod": "GET",
+        "requestName": "Get user by id",
+        "scanner": "postman",
+        "urlTemplate": "/api/users/{userId}"
+      },
+      "displayName": "GET /api/users/{userId}",
+      "id": "HttpCallSite:Postman.GET.~002Fapi~002Fusers~002F~007BuserId~007D.ef4dc803.Get~0020user~0020by~0020id@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "folderPath": "Orders",
+        "httpMethod": "POST",
+        "requestName": "Submit order",
+        "scanner": "postman",
+        "urlTemplate": "/api/orders/{orderId}/submit"
+      },
+      "displayName": "POST /api/orders/{orderId}/submit",
+      "id": "HttpCallSite:Postman.POST.~002Fapi~002Forders~002F~007BorderId~007D~002Fsubmit.ef4dc803.Submit~0020order@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    },
+    {
+      "attributes": {
+        "collectionName": "SampleApi",
+        "confidence": "high",
+        "folderPath": "Users",
+        "httpMethod": "POST",
+        "requestName": "Create user",
+        "scanner": "postman",
+        "urlTemplate": "/api/users"
+      },
+      "displayName": "POST /api/users",
+      "id": "HttpCallSite:Postman.POST.~002Fapi~002Fusers.ef4dc803.Create~0020user@ef4dc803",
+      "kind": "HttpCallSite",
+      "sourceRefs": [
+        {
+          "file": "SampleApi.postman_collection.json",
+          "spans": []
+        }
+      ]
+    }
+  ],
+  "edges": []
+}

@@ -1,0 +1,46 @@
+{
+  "edges": [
+    {
+      "attributes": {},
+      "fromId": "Method:SampleApi.Controllers.UsersController.Create~0028~0029@project-SampleApi",
+      "kind": "HandlesRoute",
+      "sourceRefs": [],
+      "toId": "HttpEndpoint:POST~0020~002Fapi~002Fusers@openapi"
+    },
+    {
+      "attributes": {},
+      "fromId": "Method:SampleApi.Controllers.UsersController.Delete~0028int~0029@project-SampleApi",
+      "kind": "HandlesRoute",
+      "sourceRefs": [],
+      "toId": "HttpEndpoint:DELETE~0020~002Fapi~002Fusers~002F~007Bid~007D@openapi"
+    },
+    {
+      "attributes": {},
+      "fromId": "Method:SampleApi.Controllers.UsersController.GetAll~0028~0029@project-SampleApi",
+      "kind": "HandlesRoute",
+      "sourceRefs": [],
+      "toId": "HttpEndpoint:GET~0020~002Fapi~002Fusers@openapi"
+    },
+    {
+      "attributes": {},
+      "fromId": "Method:SampleApi.Controllers.UsersController.GetById~0028int~0029@project-SampleApi",
+      "kind": "HandlesRoute",
+      "sourceRefs": [],
+      "toId": "HttpEndpoint:GET~0020~002Fapi~002Fusers~002F~007Bid~007D@openapi"
+    },
+    {
+      "attributes": {},
+      "fromId": "Method:lambda~0040Program-73b4690b~003A10@project-SampleApi",
+      "kind": "HandlesRoute",
+      "sourceRefs": [],
+      "toId": "HttpEndpoint:POST~0020~002Fapi~002Fping@project-SampleApi"
+    },
+    {
+      "attributes": {},
+      "fromId": "Method:lambda~0040Program-73b4690b~003A9@project-SampleApi",
+      "kind": "HandlesRoute",
+      "sourceRefs": [],
+      "toId": "HttpEndpoint:GET~0020~002Fapi~002Fhealth@openapi"
+    }
+  ]
+}
