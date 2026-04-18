@@ -1,86 +1,230 @@
-# Plan: Phase 08 — Per-Project MCP Workspace Isolation
+﻿# Plan: Phase 08 — Per-Project MCP Workspace Isolation
 
-> Replace the global WorkspaceRegistry with a per-invocation workspace config so that one MCP server process serves exactly one project, configured via CLI arg or `.csharpdllgraph.json` file, and auto-builds + watches the graph without requiring a separate CLI step.
+> Replace the global WorkspaceRegistry with a per-invocation workspace config so one MCP server process serves exactly one project, auto-builds, and watches the graph without a separate CLI step.
 
-## [ ] Task 1: Define WorkspaceConfig and .csharpdllgraph.json schema
+```plan-meta
+{
+  "version": 1,
+  "provider": "claude-code",
+  "model": "claude-sonnet-4-6",
+  "maxParallel": 1,
+  "validation": [
+    "dotnet build CSharpDllGraph.slnx"
+  ]
+}
+```
 
-Goal: Introduce a `WorkspaceConfig` record and a JSON config file schema that the MCP can load at startup.
+## Task T1: Define WorkspaceConfig and config file schema
 
-Context: `WorkspaceRegistration` (`src/CSharpDllGraph.Engine/Registry/WorkspaceRegistration.cs`) is the existing per-workspace data record — `WorkspaceConfig` replaces it for MCP use without touching the CLI registry path. The config file lives alongside the `.sln` file in the workspace root.
+```task
+{
+  "id": "T1",
+  "title": "Define WorkspaceConfig and config file schema",
+  "status": "[x]",
+  "agent": "backend-csharp",
+  "dependsOn": [],
+  "paths": [
+    "src/CSharpDllGraph.Engine/Config/"
+  ],
+  "goal": "Introduce WorkspaceConfig record and WorkspaceConfigLoader that resolves config from CLI arg (priority) or .csharpdllgraph.json file.",
+  "acceptance": [
+    "WorkspaceConfigLoader.Load(null) discovers .csharpdllgraph.json by walking up from CWD",
+    "WorkspaceConfigLoader.Load('/some/path') uses that path directly without file lookup",
+    "All resolved paths are absolute (Path.GetFullPath applied)",
+    "Missing config throws InvalidOperationException with helpful message"
+  ],
+  "steps": [
+    "Create src/CSharpDllGraph.Engine/Config/WorkspaceConfig.cs — record with: string RootPath, string GraphPath (defaults to <RootPath>/.csharpdllgraph/graph), string? SolutionPath",
+    "Create src/CSharpDllGraph.Engine/Config/WorkspaceConfigFile.cs — JSON-serializable class for .csharpdllgraph.json with fields: workspacePath (required), graphPath (optional), solutionPath (optional)",
+    "Create src/CSharpDllGraph.Engine/Config/WorkspaceConfigLoader.cs — static class, method WorkspaceConfig Load(string? cliWorkspacePath): if cliWorkspacePath non-empty use it as RootPath; else walk CWD upward searching for .csharpdllgraph.json and parse it; else throw",
+    "In Load(): resolve GraphPath and SolutionPath relative to RootPath when they are relative; normalize all paths with Path.GetFullPath"
+  ]
+}
+```
 
-- [ ] 1.1 Create `src/CSharpDllGraph.Engine/Config/WorkspaceConfig.cs` — a record with: `string RootPath`, `string GraphPath` (default `<RootPath>/.csharpdllgraph/graph`), `string? SolutionPath` (optional, null = auto-discover)
-- [ ] 1.2 Create `src/CSharpDllGraph.Engine/Config/WorkspaceConfigFile.cs` — a JSON-serializable class matching `.csharpdllgraph.json` schema with fields: `workspacePath` (string, required), `graphPath` (string, optional), `solutionPath` (string, optional)
-- [ ] 1.3 Create `src/CSharpDllGraph.Engine/Config/WorkspaceConfigLoader.cs` — static class with method `WorkspaceConfig Load(string? cliWorkspacePath)`:
-  - If `cliWorkspacePath` is not null/empty → use it as `RootPath` (highest priority)
-  - Else → search current directory and up for `.csharpdllgraph.json`, parse it
-  - Else → throw `InvalidOperationException` with clear message explaining both options
-  - Resolve `GraphPath` and `SolutionPath` relative to `RootPath` if they are relative paths
-  - Normalize all paths with `Path.GetFullPath`
+## Task T2: Create IWorkspaceContext and SingleWorkspaceQueryService
 
-## [ ] Task 2: Create IWorkspaceContext and single-workspace query service
+```task
+{
+  "id": "T2",
+  "title": "Create IWorkspaceContext and SingleWorkspaceQueryService",
+  "status": "[x]",
+  "agent": "backend-csharp",
+  "dependsOn": [
+    "T1"
+  ],
+  "paths": [
+    "src/CSharpDllGraph.Engine/Config/",
+    "src/CSharpDllGraph.Engine/Query/",
+    "src/CSharpDllGraph.Engine/Http/"
+  ],
+  "goal": "Replace IWorkspaceRegistry-based query lookup with IWorkspaceContext that wraps a single WorkspaceConfig and caches the loaded graph.",
+  "acceptance": [
+    "IWorkspaceContext.GetQueryAsync() returns InMemoryGraphQuery loaded from Config.GraphPath",
+    "Invalidate() drops the cached query so next call reloads from disk",
+    "SingleWorkspaceQueryService implements IGraphQueryService using IWorkspaceContext — no registry calls",
+    "SingleWorkspaceHttpIndexBuilder implements ICrossWorkspaceHttpIndexBuilder using IWorkspaceContext"
+  ],
+  "steps": [
+    "Create src/CSharpDllGraph.Engine/Config/IWorkspaceContext.cs — interface: WorkspaceConfig Config { get; }, Task<InMemoryGraphQuery> GetQueryAsync(CancellationToken ct), void Invalidate()",
+    "Create src/CSharpDllGraph.Engine/Config/WorkspaceContext.cs — singleton implementing IWorkspaceContext: holds WorkspaceConfig, lazily loads JsonWorkspaceStore(Config.GraphPath).LoadAsync(), caches result in a volatile field reset by Invalidate()",
+    "Create src/CSharpDllGraph.Engine/Query/SingleWorkspaceQueryService.cs — implements IGraphQueryService: delegate all query methods to IWorkspaceContext.GetQueryAsync(); silently ignore any workspace-name filter parameters (single workspace mode)",
+    "Create src/CSharpDllGraph.Engine/Http/SingleWorkspaceHttpIndexBuilder.cs — implements ICrossWorkspaceHttpIndexBuilder: build HTTP index from the single IWorkspaceContext graph snapshot; mirror the logic in CrossWorkspaceHttpIndexBuilder but without iterating a registry"
+  ]
+}
+```
 
-Goal: Replace `IWorkspaceRegistry`-based queries in the engine with a new `IWorkspaceContext` abstraction that wraps a single `WorkspaceConfig`.
+## Task T3: Embed auto-build and watch mode in Engine as IHostedService
 
-Context: `GraphQueryService` (`src/CSharpDllGraph.Engine/Query/GraphQueryService.cs`) currently depends on `IWorkspaceRegistry` to resolve workspaces by name and load `JsonWorkspaceStore`. `CrossWorkspaceHttpIndexBuilder` (`src/CSharpDllGraph.Engine/Http/CrossWorkspaceHttpIndexBuilder.cs`) also iterates registry workspaces — it needs to operate on one workspace instead. #[[src/CSharpDllGraph.Engine/Query/GraphQueryService.cs]]
+```task
+{
+  "id": "T3",
+  "title": "Embed auto-build and watch mode in Engine as IHostedService",
+  "status": "[x]",
+  "agent": "backend-csharp",
+  "dependsOn": [
+    "T2"
+  ],
+  "paths": [
+    "src/CSharpDllGraph.Engine/Watch/",
+    "src/CSharpDllGraph.Cli/WorkspaceWatchSession.cs"
+  ],
+  "goal": "Move WorkspaceWatchSession to the Engine project and implement WorkspaceAutoManager IHostedService that auto-builds on startup and keeps the graph fresh via embedded watch.",
+  "acceptance": [
+    "WorkspaceWatchSession compiles in CSharpDllGraph.Engine namespace with no CLI dependency",
+    "WorkspaceAutoManager.StartAsync() builds the graph if manifest.json is absent, then starts file watching",
+    "Each batch of file changes triggers an incremental build followed by IWorkspaceContext.Invalidate()",
+    "dotnet build CSharpDllGraph.slnx passes"
+  ],
+  "steps": [
+    "Move src/CSharpDllGraph.Cli/WorkspaceWatchSession.cs to src/CSharpDllGraph.Engine/Watch/WorkspaceWatchSession.cs; update namespace to CSharpDllGraph.Engine.Watch; remove from Cli project, add to Engine project file",
+    "Create src/CSharpDllGraph.Engine/Watch/WorkspaceAutoManager.cs implementing IHostedService: constructor takes WorkspaceConfig, IWorkspaceContext, GraphBuildPipeline, IEnumerable<IGraphProvider>, ILogger",
+    "In StartAsync: create JsonWorkspaceStore(config.GraphPath); if manifest.json missing run GraphBuildPipeline.BuildAndPersistAsync with all providers and a GraphBuildContext built from WorkspaceConfig; call IWorkspaceContext.Invalidate() after build",
+    "After initial build (or if cache existed): instantiate WorkspaceWatchSession(config.RootPath, resolvedSolutionPath, config.GraphPath, debounceMs: 750, log: logger.LogInformation); start consuming batches in a background Task",
+    "For each batch: run incremental GraphBuildPipeline.BuildAndPersistAsync with changed file paths; then call IWorkspaceContext.Invalidate()",
+    "In StopAsync: dispose WorkspaceWatchSession and cancel the background task"
+  ]
+}
+```
 
-- [ ] 2.1 Create `src/CSharpDllGraph.Engine/Config/IWorkspaceContext.cs` — interface with: `WorkspaceConfig Config { get; }`, `Task<InMemoryGraphQuery> GetQueryAsync(CancellationToken ct)`
-- [ ] 2.2 Create `src/CSharpDllGraph.Engine/Config/WorkspaceContext.cs` — singleton implementation that holds `WorkspaceConfig`, lazily loads `JsonWorkspaceStore` from `Config.GraphPath`, caches the result; exposes `Invalidate()` method to drop the cached query (called by watch mode after each rebuild)
-- [ ] 2.3 Add `IGraphQueryService` implementation `SingleWorkspaceQueryService` in `src/CSharpDllGraph.Engine/Query/SingleWorkspaceQueryService.cs` — delegates all existing `IGraphQueryService` methods to `IWorkspaceContext.GetQueryAsync()` without registry lookups; workspace-name parameters in tool calls are ignored (single workspace mode)
-- [ ] 2.4 Update `CrossWorkspaceHttpIndexBuilder` (or create `SingleWorkspaceHttpIndexBuilder`) to build the HTTP index from a single `IWorkspaceContext` instead of iterating all registry workspaces
+## Task T4: Rewire MCP Program.cs for single-workspace mode
 
-## [ ] Task 3: Implement auto-build + embedded watch mode in MCP startup
+```task
+{
+  "id": "T4",
+  "title": "Rewire MCP Program.cs for single-workspace mode",
+  "status": "[x]",
+  "agent": "backend-csharp",
+  "dependsOn": [
+    "T3"
+  ],
+  "paths": [
+    "src/CSharpDllGraph.Mcp/Program.cs",
+    "src/CSharpDllGraph.Mcp/CSharpDllGraph.Mcp.csproj"
+  ],
+  "goal": "Replace registry-based DI with WorkspaceConfig-driven wiring; parse --workspace-path CLI arg before host builder and fail fast if config is unresolvable.",
+  "acceptance": [
+    "MCP starts without --workspace-path when .csharpdllgraph.json exists in CWD",
+    "MCP starts with --workspace-path /abs/path ignoring any config file",
+    "MCP exits with non-zero code and stderr message when neither source is available",
+    "No WorkspaceRegistry or IWorkspaceRegistry in DI",
+    "dotnet build CSharpDllGraph.slnx passes"
+  ],
+  "steps": [
+    "Before host builder: scan args for --workspace-path <value>; extract value or null",
+    "Call WorkspaceConfigLoader.Load(cliWorkspacePath); on exception write to Console.Error and Environment.Exit(1)",
+    "In services: remove WorkspaceRegistry and IWorkspaceRegistry registrations",
+    "Register resolved WorkspaceConfig instance as singleton",
+    "Register WorkspaceContext as IWorkspaceContext singleton",
+    "Register SingleWorkspaceQueryService as IGraphQueryService singleton",
+    "Register SingleWorkspaceHttpIndexBuilder as ICrossWorkspaceHttpIndexBuilder singleton",
+    "Register all graph providers (DotnetProvider, ControllerEndpointProvider, MinimalApiEndpointProvider, HttpClientCallSiteProvider, HttpFileCallSiteProvider, JsFetchCallSiteProvider, OpenApiSpecProvider, PostmanCallSiteProvider) — copy exact registration pattern from CLI Program.cs or ServiceRegistration",
+    "Add AddHostedService<WorkspaceAutoManager>()",
+    "Add project reference to CSharpDllGraph.Engine in Mcp .csproj if not already present"
+  ]
+}
+```
 
-Goal: When the MCP server starts, it builds the graph if no cache exists, then starts an embedded file watcher that triggers incremental rebuilds, keeping the in-memory query fresh.
+## Task T5: Remove workspace-selection noise from MCP tool signatures
 
-Context: `WorkspaceWatchSession` (`src/CSharpDllGraph.Cli/WorkspaceWatchSession.cs`) already implements debounced file watching — it can be moved to the Engine project or referenced directly. `GraphBuildPipeline` (`src/CSharpDllGraph.Engine/Providers/GraphBuildPipeline.cs`) performs full and incremental builds given a `GraphBuildContext` and `IWorkspaceStore`. The CLI's `BuildCommand` and `WatchCommand` show the full wiring pattern. #[[src/CSharpDllGraph.Cli/WorkspaceWatchSession.cs]]
+```task
+{
+  "id": "T5",
+  "title": "Remove workspace-selection noise from MCP tool signatures",
+  "status": "[x]",
+  "agent": "backend-csharp",
+  "dependsOn": [
+    "T4"
+  ],
+  "paths": [
+    "src/CSharpDllGraph.Mcp/Tools/CSharpDllGraphTools.cs"
+  ],
+  "goal": "Remove or make optional the workspaceName/workspaces parameters from all MCP tool methods so Claude sees a clean single-workspace API.",
+  "acceptance": [
+    "No required workspace-name parameter in any tool",
+    "Tool descriptions updated to say workspace is pre-configured at server startup",
+    "All tools still return correct results via SingleWorkspaceQueryService"
+  ],
+  "steps": [
+    "Open CSharpDllGraphTools.cs; for each [McpServerTool] method identify workspaceName or workspaces parameters",
+    "Remove those parameters (or default them to null/empty if removing breaks interface — confirm SingleWorkspaceQueryService ignores them)",
+    "Update each tool's Description attribute to remove workspace selection language; add a note like 'workspace is configured at server startup'",
+    "Verify the file compiles; check that no tool method passes a non-null workspace name to a registry call"
+  ]
+}
+```
 
-- [ ] 3.1 Move `WorkspaceWatchSession` from `CSharpDllGraph.Cli` to `CSharpDllGraph.Engine` (namespace `CSharpDllGraph.Engine.Watch`) so MCP can reference it without a CLI dependency
-- [ ] 3.2 Create `src/CSharpDllGraph.Engine/Watch/WorkspaceAutoManager.cs` — `IHostedService` implementation:
-  - On `StartAsync`: instantiate `JsonWorkspaceStore(config.GraphPath)`, check if `manifest.json` exists in graph path
-  - If no cache → run full `GraphBuildPipeline.BuildAndPersistAsync(...)` with all providers
-  - After build (or if cache existed) → start `WorkspaceWatchSession`
-  - On each batch of changes from the session → run incremental build → call `IWorkspaceContext.Invalidate()` to drop cached query
-- [ ] 3.3 Register all graph providers in MCP DI (same set as CLI: `DotnetProvider`, `ControllerEndpointProvider`, `MinimalApiEndpointProvider`, `HttpClientCallSiteProvider`, `HttpFileCallSiteProvider`, `JsFetchCallSiteProvider`, `OpenApiSpecProvider`, `PostmanCallSiteProvider`) — check CLI's `ServiceRegistration` or `Program.cs` for the exact registration pattern
-- [ ] 3.4 Register `WorkspaceAutoManager` as `IHostedService` in MCP DI
+## Task T6: Document .csharpdllgraph.json and MCP setup
 
-## [ ] Task 4: Rewire MCP Program.cs
+```task
+{
+  "id": "T6",
+  "title": "Document .csharpdllgraph.json and MCP setup",
+  "status": "[x]",
+  "agent": "docs-product",
+  "dependsOn": [
+    "T5"
+  ],
+  "paths": [
+    "README.md"
+  ],
+  "goal": "Add a Per-Project Configuration section to README.md covering the config file schema and Claude Desktop MCP snippet.",
+  "acceptance": [
+    "README.md has a 'Per-Project Configuration' section with .csharpdllgraph.json example",
+    "Both config sources documented: CLI arg --workspace-path and .csharpdllgraph.json",
+    "claude_desktop_config.json snippet shows --workspace-path usage"
+  ],
+  "steps": [
+    "Add 'Per-Project Configuration' section to README.md with .csharpdllgraph.json JSON example showing all three fields (workspacePath required, graphPath and solutionPath optional)",
+    "Document priority: CLI arg --workspace-path overrides config file",
+    "Add claude_desktop_config.json snippet: mcpServers entry for CSharpDllGraph with args: ['--workspace-path', '/absolute/path/to/your/project']",
+    "Add note that MCP auto-builds the graph on first run and keeps it fresh via embedded file watching"
+  ]
+}
+```
 
-Goal: Replace registry-based DI wiring in MCP host with `WorkspaceConfig`-driven wiring using the new types.
+## Task T7: Sync product definition
 
-Context: Current `Program.cs` (`src/CSharpDllGraph.Mcp/Program.cs`) registers `WorkspaceRegistry`, `IWorkspaceRegistry`, `IGraphQueryService`, `ICrossWorkspaceHttpIndexBuilder`. All of these need replacement. CLI arg `--workspace-path` must be parsed before the host builder. #[[src/CSharpDllGraph.Mcp/Program.cs]]
-
-- [ ] 4.1 Parse `args` before host builder: extract `--workspace-path <value>` if present (simple manual parse, no System.CommandLine needed here)
-- [ ] 4.2 Call `WorkspaceConfigLoader.Load(cliWorkspacePath)` — fail fast with a clear error message to stderr if config cannot be resolved, then `Environment.Exit(1)`
-- [ ] 4.3 Register `WorkspaceConfig` as singleton in DI (the resolved instance)
-- [ ] 4.4 Register `WorkspaceContext` as `IWorkspaceContext` singleton
-- [ ] 4.5 Register `SingleWorkspaceQueryService` as `IGraphQueryService` singleton
-- [ ] 4.6 Register `SingleWorkspaceHttpIndexBuilder` as `ICrossWorkspaceHttpIndexBuilder` singleton
-- [ ] 4.7 Remove `WorkspaceRegistry` and `IWorkspaceRegistry` registrations
-- [ ] 4.8 Add `AddHostedService<WorkspaceAutoManager>()` registration
-- [ ] 4.9 Verify `CSharpDllGraphTools` constructor still compiles (it only takes `IGraphQueryService` — no changes needed)
-
-## [ ] Task 5: Update CSharpDllGraphTools for single-workspace mode
-
-Goal: Remove workspace-name parameters from MCP tools that are meaningless in single-workspace mode, or make them silently ignored, so Claude gets a cleaner tool API.
-
-Context: `CSharpDllGraphTools.cs` (`src/CSharpDllGraph.Mcp/Tools/CSharpDllGraphTools.cs`) exposes workspace name as a parameter to most tools — in single-workspace mode this is noise. #[[src/CSharpDllGraph.Mcp/Tools/CSharpDllGraphTools.cs]]
-
-- [ ] 5.1 Review each tool's parameter list — identify `workspaceName` / `workspaces` parameters
-- [ ] 5.2 Remove or mark as optional (with null default) any workspace-selection parameters; update tool descriptions to reflect that the workspace is pre-configured
-- [ ] 5.3 Ensure `SingleWorkspaceQueryService` ignores any passed workspace names gracefully (returns data from the single loaded workspace)
-
-## [ ] Task 6: Document .csharpdllgraph.json format
-
-Goal: Add a concise schema example so users know how to configure a project.
-
-- [ ] 6.1 Add `.csharpdllgraph.json` example to the root `README.md` under a new "Per-Project Configuration" section with the three fields: `workspacePath`, `graphPath` (optional), `solutionPath` (optional)
-- [ ] 6.2 Document the two ways to pass workspace to MCP: (a) `--workspace-path <absolute-path>` CLI arg, (b) `.csharpdllgraph.json` in workspace root or any ancestor directory
-- [ ] 6.3 Add a minimal Claude Desktop `claude_desktop_config.json` snippet showing MCP server config with `--workspace-path`
-
-## [ ] Task 7: Sync product definition
-
-Goal: Update `PRODUCT_DEFINITION.md` if the plan introduces new scope, users, flows, rules, constraints, or success metrics.
-
-- [ ] 7.1 Review `PRODUCT_DEFINITION.md` against the changes introduced by this plan
-- [ ] 7.2 Update `PRODUCT_DEFINITION.md` where applicable, preserving internal consistency. Skip if no changes apply.
-- [ ] 7.3 Respond with `Product definition: updated` or `Product definition: no update required`
+```task
+{
+  "id": "T7",
+  "title": "Sync product definition",
+  "status": "[x]",
+  "agent": "docs-product",
+  "dependsOn": [
+    "T6"
+  ],
+  "paths": [
+    "PRODUCT_DEFINITION.md"
+  ],
+  "goal": "Update PRODUCT_DEFINITION.md to reflect the new per-project isolated MCP model.",
+  "acceptance": [
+    "PRODUCT_DEFINITION.md updated or confirmed no update required"
+  ],
+  "steps": [
+    "Review PRODUCT_DEFINITION.md against changes introduced by this plan (no WorkspaceRegistry in MCP, per-project config, auto-build+watch)",
+    "Update sections describing MCP architecture, configuration, and workspace management where applicable",
+    "Respond with 'Product definition: updated' or 'Product definition: no update required'"
+  ]
+}
+```

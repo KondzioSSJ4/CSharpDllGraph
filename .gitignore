@@ -368,6 +368,10 @@ DevOps/Postman/newman/
 local/
 /.github
 
+# CSharpDllGraph — generated graph data and build cache
+.artifacts/
+.csharpdllgraph/
+
 !tests/Fixtures/
 !tests/Fixtures/SampleSolution/
 !tests/Fixtures/SampleSolution/**/

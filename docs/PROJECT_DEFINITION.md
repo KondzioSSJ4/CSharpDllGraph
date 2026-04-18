@@ -6,10 +6,14 @@
 
 ## Cel produktu
 
-CSharpDllGraph to serwer MCP (Model Context Protocol) realizujący statyczną analizę grafową ekosystemu .NET.
-Narzędzie buduje graf zależności na podstawie pliku `.sln`, a następnie udostępnia zestaw precyzyjnych
+CSharpDllGraph to serwer MCP (Model Context Protocol) i zestaw narzędzi CLI do statycznej analizy grafowej ekosystemu .NET.
+Narzędzie buduje graf zależności na podstawie pliku `.sln` lub `.slnx`, a następnie udostępnia zestaw precyzyjnych
 narzędzi zapytaniowych, z których korzystają modele językowe działające w trybie generowania kodu
 oraz deweloperzy pracujący bezpośrednio z CLI.
+
+Jeden proces MCP obsługuje dokładnie jeden projekt roboczy.
+Konfiguracja projektu pochodzi z parametru `--workspace-path` lub pliku `.csharpdllgraph.json`.
+Serwer MCP przy starcie automatycznie buduje graf, jeśli brakuje `manifest.json`, a potem utrzymuje go aktualnym przez osadzony file watcher.
 
 Żadne z narzędzi nie używa modelu językowego ani osadzeń wektorowych — cała logika opiera się
 na statycznej analizie kodu źródłowego i metadanych pakietów NuGet.
@@ -20,7 +24,7 @@ na statycznej analizie kodu źródłowego i metadanych pakietów NuGet.
 
 | Użytkownik | Tryb użycia | Główna potrzeba |
 |---|---|---|
-| Model językowy (AI w trybie code-gen) | Klient MCP (stdio) | Precyzyjne kontekst-minimalne odpowiedzi bez halucynacji |
+| Model językowy (AI w trybie code-gen) | Klient MCP (stdio), jeden serwer per projekt | Precyzyjne kontekst-minimalne odpowiedzi bez halucynacji |
 | Deweloper | CLI / klient MCP | Szybka nawigacja po dużej bazie kodu bez otwierania IDE |
 
 ---
@@ -34,7 +38,7 @@ Realizowane w fazie 6 po ukończeniu analizy strukturalnej (fazy 1–5).
 |---|---|---|
 | 1 | `describe_package_api` | Publiczna powierzchnia pakietu NuGet w danej wersji |
 | 2 | `find_usages` | Miejsca, w których symbol X jest używany w kodzie użytkownika |
-| 3 | `trace_http_call` | Wywołania trafiające do endpointu X (między workspace'ami) |
+| 3 | `trace_http_call` | Wywołania trafiające do endpointu X w skonfigurowanym projekcie |
 | 4 | `list_dependencies` | Rozwiązane wersje pakietów per projekt |
 | 5 | `find_version_conflicts` | Ten sam pakiet w różnych wersjach w ramach solucji |
 | 6 | `suggest_usage` | Kanoniczne miejsca użycia symbolu wyekstrahowane z istniejącego kodu |
@@ -54,7 +58,7 @@ Szczegółowe pliki faz i bramki VALIDATE-STOP opisano w [`plans/README.md`](../
 | 4 | ✓ | Endpointy HTTP — analiza statyczna |
 | 5 | ✓ | Specyfikacje HTTP (OpenAPI/Swagger, `.http`, Postman) + reconciliation |
 | 6 | ✓ | Implementacja 6 narzędzi MCP |
-| 7 | ~ | CLI (`build`, `update`, `query`, `workspace`), file watcher, inkrementalny rebuild |
+| 7 | ~ | CLI (`build`, `update`, `query`, `watch`), konfiguracja per projekt dla MCP, auto-build, osadzony file watcher, inkrementalny rebuild |
 
 ---
 
@@ -64,9 +68,31 @@ Faza 1 wprowadza wspólny model grafu dla całego produktu.
 Każdy element reprezentowany jest jako węzeł z jednoznacznym identyfikatorem.
 Relacje między elementami reprezentowane są jako krawędzie.
 Model obejmuje strukturę kodu, zależności, elementy HTTP i odwołania zewnętrzne.
-Dane grafu zapisywane są per workspace w małych plikach JSON podzielonych na typy.
+Dane grafu zapisywane są per projekt roboczy w małych plikach JSON podzielonych na typy.
 Zapis jest deterministyczny, aby ułatwić porównywanie zmian między kolejnymi przebudowami.
 Na tym modelu opiera się warstwa zapytań używana później przez narzędzia MCP.
+
+---
+
+## Model uruchomienia MCP
+
+Serwer MCP działa w trybie single-workspace.
+Nie utrzymuje globalnego `WorkspaceRegistry` do wyboru projektu w czasie zapytania.
+Dobór projektu następuje przed startem serwera.
+
+Źródła konfiguracji:
+
+- parametr `--workspace-path`
+- plik `.csharpdllgraph.json` wyszukiwany od bieżącego katalogu w górę
+
+Plik `.csharpdllgraph.json` może wskazać:
+
+- `workspacePath`
+- `graphPath`
+- `solutionPath`
+
+Po uruchomieniu wszystkie narzędzia MCP pracują na wcześniej skonfigurowanym projekcie.
+Sygnatury narzędzi nie wymagają parametru wyboru workspace.
 
 ---
 
@@ -74,7 +100,7 @@ Na tym modelu opiera się warstwa zapytań używana później przez narzędzia M
 
 - **Brak runtime capture** — narzędzie nie przechwytuje ruchu HTTP w czasie działania aplikacji.
 - **Brak LLM w narzędziach** — żadne narzędzie nie wywołuje modelu językowego ani osadzeń.
-- **Brak automatycznego merge workspace'ów** — rozwiązywanie odbywa się wyłącznie w czasie zapytania.
+- **Brak wieloprojektowego routingu w jednym procesie MCP** — jeden proces obsługuje jeden projekt roboczy.
 - **Brak providerów innych niż .NET** — seam dla przyszłych providerów zarezerwowany w fazie 2,
   ale żaden inny provider nie jest dostarczany w v1.
 

@@ -93,11 +93,49 @@ Start the MCP server over stdio:
 dotnet run --project src/CSharpDllGraph.Mcp --
 ```
 
+Pass a workspace explicitly:
+
+```bash
+dotnet run --project src/CSharpDllGraph.Mcp -- --workspace-path /absolute/path/to/your/project
+```
+
 Important:
 
-- register at least one workspace first with the CLI
-- the MCP server reads workspace registrations from the registry file above
 - the default log file is `src/CSharpDllGraph.Mcp/logs/mcp-actions.log` when started from that project folder
+
+## Per-Project Configuration
+
+The MCP server resolves the target workspace from one of two sources:
+
+1. `--workspace-path /absolute/path/to/your/project`
+2. `.csharpdllgraph.json`
+
+Priority:
+
+- `--workspace-path` overrides `.csharpdllgraph.json`
+
+If `--workspace-path` is not passed, the server searches from the current working directory upward for `.csharpdllgraph.json`.
+
+Example `.csharpdllgraph.json`:
+
+```json
+{
+  "workspacePath": "/absolute/path/to/your/project",
+  "graphPath": ".csharpdllgraph/graph",
+  "solutionPath": "YourSolution.slnx"
+}
+```
+
+Schema:
+
+- `workspacePath` required. Workspace root path.
+- `graphPath` optional. Relative paths resolve from `workspacePath`. Default: `.csharpdllgraph/graph`
+- `solutionPath` optional. Relative paths resolve from `workspacePath`. Use it when the workspace has multiple `.sln` or `.slnx` files.
+
+Behavior:
+
+- On first run, MCP builds the graph automatically if `manifest.json` is missing.
+- After startup, embedded file watching keeps the graph fresh with incremental rebuilds.
 
 ## Quick local smoke test
 
@@ -130,7 +168,7 @@ Kiro loads MCP servers from workspace or user settings. Workspace config file:
 
 - `.kiro/settings/mcp.json`
 
-Example:
+Example with `--workspace-path`:
 
 ```json
 {
@@ -141,7 +179,9 @@ Example:
         "run",
         "--project",
         "D:\\GIT\\CSharpDllGraph\\src\\CSharpDllGraph.Mcp",
-        "--"
+        "--",
+        "--workspace-path",
+        "C:\\absolute\\path\\to\\your\\project"
       ],
       "env": {}
     }
@@ -149,7 +189,9 @@ Example:
 }
 ```
 
-Before using it in Kiro, build or update at least one workspace with the CLI.
+Alternatively, place `.csharpdllgraph.json` in your project root and omit `--workspace-path` — the server will find it automatically.
+
+The MCP server auto-builds the graph on first run and keeps it fresh via embedded file watching — no separate CLI step needed.
 
 ## Configure as MCP for Codex
 
@@ -199,6 +241,26 @@ Example:
         "--"
       ],
       "env": {}
+    }
+  }
+}
+```
+
+Claude Desktop `claude_desktop_config.json` example:
+
+```json
+{
+  "mcpServers": {
+    "CSharpDllGraph": {
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "D:\\GIT\\CSharpDllGraph\\src\\CSharpDllGraph.Mcp",
+        "--",
+        "--workspace-path",
+        "/absolute/path/to/your/project"
+      ]
     }
   }
 }

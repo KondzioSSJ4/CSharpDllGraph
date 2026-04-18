@@ -136,7 +136,7 @@ The script may override both at runtime, so keep plan defaults sensible.
 ## Executor
 
 Script path:
-`./.claude/skills/plan-output-script/scripts/execute-plan.ps1`
+`./scripts/ai/execute-plan.ps1`
 
 Example:
-`pwsh ./.claude/skills/plan-output-script/scripts/execute-plan.ps1 -Plan phase-06-mcp-tools -Provider codex -Model gpt-5.4`
+`pwsh ./scripts/ai/execute-plan.ps1 -Plan phase-06-mcp-tools -Provider codex -Model gpt-5.4`

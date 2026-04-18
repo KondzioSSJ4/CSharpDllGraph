@@ -15,7 +15,7 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$executorPath = Join-Path $PSScriptRoot '.agents\skills\plan-output-script\scripts\execute-plan.ps1'
+$executorPath = Join-Path $PSScriptRoot 'scripts\ai\execute-plan.ps1'
 if (-not (Test-Path -LiteralPath $executorPath)) {
     throw "Executor script not found: $executorPath"
 }

@@ -1,8 +1,8 @@
 using System.Threading.Channels;
 
-namespace CSharpDllGraph.Cli;
+namespace CSharpDllGraph.Engine.Watch;
 
-internal sealed class WorkspaceWatchSession : IDisposable
+public sealed class WorkspaceWatchSession : IDisposable
 {
     private static readonly string[] TrackedSourceExtensions =
     [
