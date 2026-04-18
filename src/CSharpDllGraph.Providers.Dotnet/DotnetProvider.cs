@@ -17,6 +17,7 @@ public sealed class DotnetProvider : IGraphProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(context);
+        RoslynBootstrap.EnsureRegistered();
 
         var solutionPath = context.SolutionPath;
         var solutionDirectory = Path.GetDirectoryName(solutionPath)
@@ -24,12 +25,14 @@ public sealed class DotnetProvider : IGraphProvider
 
         var collector = new GraphCollector();
         var packages = new Dictionary<PackageIdentity, PackageWorkItem>(PackageIdentityComparer.Instance);
+        var projectPackageVersionsByPath = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var projectPath in DiscoverProjectPaths(solutionPath))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             var assets = LoadProjectAssets(projectPath);
+            projectPackageVersionsByPath[projectPath] = BuildPackageVersionMap(assets);
             var projectNode = CreateProjectNode(solutionDirectory, projectPath, assets.TargetFrameworks);
             collector.AddNode(projectNode);
 
@@ -74,6 +77,22 @@ public sealed class DotnetProvider : IGraphProvider
         {
             cancellationToken.ThrowIfCancellationRequested();
             EmitPackageStructure(package, collector);
+        }
+
+        var roslynFragment = await RoslynUsageGraphBuilder.BuildAsync(
+            solutionPath,
+            solutionDirectory,
+            projectPackageVersionsByPath,
+            cancellationToken);
+
+        foreach (var node in roslynFragment.Nodes)
+        {
+            collector.AddNode(node);
+        }
+
+        foreach (var edge in roslynFragment.Edges)
+        {
+            collector.AddEdge(edge);
         }
 
         await Task.Yield();
@@ -176,6 +195,21 @@ public sealed class DotnetProvider : IGraphProvider
             packageFolders,
             directDependenciesByFramework.Keys.OrderBy(static framework => framework, StringComparer.Ordinal).ToArray(),
             targets);
+    }
+
+    private static IReadOnlyDictionary<string, string> BuildPackageVersionMap(ProjectAssets assets)
+    {
+        var packageVersions = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var target in assets.Targets)
+        {
+            foreach (var package in target.Packages)
+            {
+                packageVersions[package.Identity.Name] = package.Identity.Version;
+            }
+        }
+
+        return packageVersions;
     }
 
     private static IReadOnlyDictionary<PackageIdentity, PackageLibrary> ParseLibraries(JsonElement root)

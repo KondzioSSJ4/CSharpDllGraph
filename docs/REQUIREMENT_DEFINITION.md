@@ -51,12 +51,12 @@
 
 | Status | Wymaganie |
 |---|---|
-| `[ ]` | Roslyn workspace ładuje projekty z pliku solucji |
-| `[ ]` | Semantyczny model Roslyn rozwiązuje symbole do węzłów grafu |
-| `[ ]` | Krawędzie `Calls` między `Method` (kod użytkownika → symbol NuGet) |
-| `[ ]` | Krawędzie oznaczone tagiem wersji pakietu docelowego |
-| `[ ]` | Krawędzie `Implements` dla relacji implementacji interfejsów |
-| `[ ]` | Testy weryfikują poprawność krawędzi na syntetycznym projekcie C# |
+| `[x]` | Roslyn workspace ładuje projekty z pliku solucji |
+| `[x]` | Semantyczny model Roslyn rozwiązuje symbole do węzłów grafu |
+| `[x]` | Krawędzie `Calls` między `Method` (kod użytkownika → symbol NuGet) |
+| `[x]` | Krawędzie oznaczone tagiem wersji pakietu docelowego |
+| `[x]` | Krawędzie `Implements` dla relacji implementacji interfejsów |
+| `[x]` | Testy weryfikują poprawność krawędzi na syntetycznym projekcie C# |
 
 ---
 

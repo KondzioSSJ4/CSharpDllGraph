@@ -35,8 +35,8 @@ public sealed class GraphBuildPipeline
 
         var existingManifest = store.GetManifest();
         var manifest = new WorkspaceManifest(
-            "phase-02",
-            "phase-02",
+            "phase-03",
+            "phase-03",
             DateTimeOffset.UtcNow,
             existingManifest.ContentHashes);
 

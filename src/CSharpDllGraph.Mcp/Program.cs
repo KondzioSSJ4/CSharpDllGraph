@@ -1,9 +1,12 @@
 using CSharpDllGraph.Mcp.Logging;
 using CSharpDllGraph.Mcp.Tools;
+using CSharpDllGraph.Providers.Dotnet;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+
+RoslynBootstrap.EnsureRegistered();
 
 var builder = Host.CreateEmptyApplicationBuilder(settings: null);
 

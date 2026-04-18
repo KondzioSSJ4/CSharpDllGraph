@@ -1,0 +1,19 @@
+#nullable enable
+
+using Sample.Transitive;
+using Sample.WidgetKit;
+
+namespace Sample.AppV1;
+
+public static class Usage
+{
+    public static string Run(string? id)
+    {
+        LegacyWidgetService service = new();
+        IWidgetService contract = service;
+        var marker = new SharedContract();
+        var first = contract.Get(id);
+        var second = contract.Get(first);
+        return second + marker.Value;
+    }
+}
