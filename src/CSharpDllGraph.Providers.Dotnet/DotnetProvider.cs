@@ -5,12 +5,15 @@ using System.Text.Json;
 using System.Xml.Linq;
 using CSharpDllGraph.Engine.Graph;
 using CSharpDllGraph.Engine.Providers;
+using CSharpDllGraph.Providers.Dotnet.Cache;
 
 namespace CSharpDllGraph.Providers.Dotnet;
 
 public sealed class DotnetProvider : IGraphProvider
 {
-    public string Id => "dotnet";
+    private const string ProviderId = "dotnet";
+
+    public string Id => ProviderId;
 
     public async IAsyncEnumerable<GraphFragment> CollectAsync(
         GraphBuildContext context,
@@ -24,6 +27,7 @@ public sealed class DotnetProvider : IGraphProvider
             ?? throw new InvalidOperationException("Solution directory is required.");
 
         var collector = new GraphCollector();
+        var packageFragmentCache = new FilePackageFragmentCache(context.WorkspaceRootPath);
         var packages = new Dictionary<PackageIdentity, PackageWorkItem>(PackageIdentityComparer.Instance);
         var projectPackageVersionsByPath = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
 
@@ -76,7 +80,7 @@ public sealed class DotnetProvider : IGraphProvider
                      .ThenBy(static item => item.Identity.Version, StringComparer.Ordinal))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            EmitPackageStructure(package, collector);
+            await EmitPackageStructure(package, collector, packageFragmentCache, cancellationToken);
         }
 
         var roslynFragment = await RoslynUsageGraphBuilder.BuildAsync(
@@ -373,9 +377,22 @@ public sealed class DotnetProvider : IGraphProvider
             });
     }
 
-    private static void EmitPackageStructure(PackageWorkItem package, GraphCollector collector)
+    private static async Task EmitPackageStructure(
+        PackageWorkItem package,
+        GraphCollector collector,
+        IPackageFragmentCache cache,
+        CancellationToken cancellationToken)
     {
+        var cachedFragment = await cache.TryGetAsync(package.Identity.Name, package.Identity.Version, cancellationToken);
+        if (cachedFragment is not null)
+        {
+            collector.AddFragment(cachedFragment);
+            return;
+        }
+
         var packageNodeId = new NodeId(NodeKind.Package, package.Identity.Name, package.Identity.Version);
+        var packageCollector = new GraphCollector();
+
         foreach (var dllPath in ResolveAssemblyPaths(package))
         {
             var assemblyName = AssemblyName.GetAssemblyName(dllPath);
@@ -389,20 +406,24 @@ public sealed class DotnetProvider : IGraphProvider
                     ["fileName"] = JsonSerializer.SerializeToElement(Path.GetFileName(dllPath))
                 });
 
-            collector.AddNode(assemblyNode);
-            collector.AddContainsEdge(packageNodeId, assemblyNode.Id);
+            packageCollector.AddNode(assemblyNode);
+            packageCollector.AddContainsEdge(packageNodeId, assemblyNode.Id);
 
             var loadContext = new NuGetAssemblyLoadContext(package.PackageFolders);
             try
             {
                 var assembly = loadContext.LoadFromAssemblyPath(dllPath);
-                EmitAssemblyTypes(package.Identity.Version, assemblyName.Name ?? string.Empty, assemblyNode.Id, assembly, collector);
+                EmitAssemblyTypes(package.Identity.Version, assemblyName.Name ?? string.Empty, assemblyNode.Id, assembly, packageCollector);
             }
             finally
             {
                 loadContext.Unload();
             }
         }
+
+        var packageFragment = packageCollector.ToFragment(ProviderId);
+        collector.AddFragment(packageFragment);
+        await cache.SetAsync(package.Identity.Name, package.Identity.Version, packageFragment, cancellationToken);
     }
 
     private static IEnumerable<string> ResolveAssemblyPaths(PackageWorkItem package)
@@ -596,11 +617,18 @@ public sealed class DotnetProvider : IGraphProvider
 
     private static bool HasCompilerGeneratedMarker(MemberInfo member)
     {
-        return member.GetCustomAttributesData()
-            .Any(static attribute => string.Equals(
-                attribute.AttributeType.FullName,
-                typeof(CompilerGeneratedAttribute).FullName,
-                StringComparison.Ordinal));
+        try
+        {
+            return member.GetCustomAttributesData()
+                .Any(static attribute => string.Equals(
+                    attribute.AttributeType.FullName,
+                    typeof(CompilerGeneratedAttribute).FullName,
+                    StringComparison.Ordinal));
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     private static string GetMethodIdentifier(string typeIdentifier, MethodInfo method)
@@ -687,6 +715,19 @@ public sealed class DotnetProvider : IGraphProvider
         public void AddEdge(Edge edge)
         {
             _edges[CreateEdgeKey(edge)] = edge;
+        }
+
+        public void AddFragment(GraphFragment fragment)
+        {
+            foreach (var node in fragment.Nodes)
+            {
+                AddNode(node);
+            }
+
+            foreach (var edge in fragment.Edges)
+            {
+                AddEdge(edge);
+            }
         }
 
         public GraphFragment ToFragment(string providerId)

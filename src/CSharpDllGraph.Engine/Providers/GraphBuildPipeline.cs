@@ -7,6 +7,9 @@ namespace CSharpDllGraph.Engine.Providers;
 
 public sealed class GraphBuildPipeline
 {
+    private const string MetadataFolderName = ".csharpdllgraph";
+    private const string MetadataGitIgnoreFileName = ".gitignore";
+    private const string CacheGitIgnoreEntry = "/cache/";
     private const string ProviderCacheFolderName = "providers";
     private static readonly JsonSerializerOptions ProviderFragmentSerializerOptions = GraphJsonSerializerOptions.Create();
     private readonly IReadOnlyList<IGraphProvider> _providers;
@@ -89,7 +92,38 @@ public sealed class GraphBuildPipeline
             combinedFragment.Edges);
 
         await store.SaveAsync(snapshot, cancellationToken);
+        await EnsureMetadataGitIgnoreAsync(context.WorkspaceRootPath, cancellationToken);
         return snapshot;
+    }
+
+    private static async Task EnsureMetadataGitIgnoreAsync(string workspaceRootPath, CancellationToken cancellationToken)
+    {
+        var metadataDirectoryPath = Path.Combine(workspaceRootPath, MetadataFolderName);
+        Directory.CreateDirectory(metadataDirectoryPath);
+
+        var gitIgnorePath = Path.Combine(metadataDirectoryPath, MetadataGitIgnoreFileName);
+        if (!File.Exists(gitIgnorePath))
+        {
+            await File.WriteAllTextAsync(gitIgnorePath, CacheGitIgnoreEntry + Environment.NewLine, cancellationToken);
+            return;
+        }
+
+        var existingContent = await File.ReadAllTextAsync(gitIgnorePath, cancellationToken);
+        var lines = existingContent
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (lines.Contains(CacheGitIgnoreEntry, StringComparer.Ordinal))
+        {
+            return;
+        }
+
+        var separator = existingContent.Length == 0 || existingContent.EndsWith('\n')
+            ? string.Empty
+            : Environment.NewLine;
+        await File.AppendAllTextAsync(
+            gitIgnorePath,
+            separator + CacheGitIgnoreEntry + Environment.NewLine,
+            cancellationToken);
     }
 
     private static GraphFragment MergeFragments(GraphFragment current, GraphFragment next)

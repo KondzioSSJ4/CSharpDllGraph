@@ -426,7 +426,7 @@ function Invoke-Validation {
 
     foreach ($command in $PlanData.Meta.validation) {
         Write-Host "Validation: $command"
-        $null = & pwsh -NoProfile -Command $command
+        $null = & pwsh -NoProfile -WorkingDirectory $RepoRoot -Command $command
         if ($LASTEXITCODE -ne 0) {
             throw "Validation failed: $command"
         }

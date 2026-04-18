@@ -1,4 +1,4 @@
-# Plan: NuGet Package Cache + DLL Load Bug Fix
+﻿# Plan: NuGet Package Cache + DLL Load Bug Fix
 
 > Fix crash when transitive DLL dependencies are missing during reflection, and add per-package cache to avoid re-processing unchanged NuGet packages on every build.
 
@@ -9,7 +9,7 @@
   "model": "claude-sonnet-4-6",
   "maxParallel": 1,
   "validation": [
-    "dotnet build /d/GIT/CSharpDllGraph/CSharpDllGraph.slnx"
+    "dotnet build CSharpDllGraph.slnx"
   ]
 }
 ```
@@ -20,7 +20,7 @@
 {
   "id": "T1",
   "title": "Fix HasCompilerGeneratedMarker crash on missing transitive DLL",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "backend-csharp",
   "dependsOn": [],
   "paths": [
@@ -48,9 +48,11 @@
 {
   "id": "T2",
   "title": "Add IPackageFragmentCache interface and file-based implementation",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "backend-csharp",
-  "dependsOn": ["T1"],
+  "dependsOn": [
+    "T1"
+  ],
   "paths": [
     "src/CSharpDllGraph.Providers.Dotnet/",
     "src/CSharpDllGraph.Engine/Store/"
@@ -82,9 +84,11 @@
 {
   "id": "T3",
   "title": "Wire cache into DotnetProvider.EmitPackageStructure",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "backend-csharp",
-  "dependsOn": ["T2"],
+  "dependsOn": [
+    "T2"
+  ],
   "paths": [
     "src/CSharpDllGraph.Providers.Dotnet/DotnetProvider.cs"
   ],
@@ -109,15 +113,17 @@
 }
 ```
 
-## Task T4: Add .gitignore for cache directory in workspace output
+## Task T4: Add .gitignore for cache directory
 
 ```task
 {
   "id": "T4",
   "title": "Add .gitignore for cache directory",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "backend-csharp",
-  "dependsOn": ["T2"],
+  "dependsOn": [
+    "T2"
+  ],
   "paths": [
     "src/CSharpDllGraph.Engine/",
     "src/CSharpDllGraph.Cli/"
