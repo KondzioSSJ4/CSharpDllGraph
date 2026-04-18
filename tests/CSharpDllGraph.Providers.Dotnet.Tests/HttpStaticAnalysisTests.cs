@@ -138,6 +138,147 @@ public sealed class HttpStaticAnalysisTests
     }
 
     [Fact]
+    public void PostmanCallSiteProvider_ExtractsCallSiteNodes_FromFixtureCollection()
+    {
+        var fixtureRoot = GetSampleApiFixtureRoot();
+        var collectionPath = Path.Combine(fixtureRoot, "SampleApi.postman_collection.json");
+        Assert.True(File.Exists(collectionPath), $"Postman fixture not found: {collectionPath}");
+
+        var json = File.ReadAllText(collectionPath);
+        var nodes = PostmanCallSiteProvider.ParseCollection(json, collectionPath, fixtureRoot).ToList();
+
+        // All extracted nodes must be HttpCallSite
+        Assert.All(nodes, static node => Assert.Equal(NodeKind.HttpCallSite, node.Kind));
+
+        // Must contain at least one node per top-level item that has a request
+        Assert.True(nodes.Count >= 3, $"Expected at least 3 HttpCallSite nodes, got {nodes.Count}.");
+
+        // Collection name attribute is preserved
+        Assert.All(nodes, node =>
+        {
+            Assert.True(
+                node.Attributes.TryGetValue("collectionName", out var col) && col.GetString() == "SampleApi",
+                $"Node {node.Id} missing collectionName=SampleApi.");
+        });
+
+        // Folder path is set for nested items
+        Assert.Contains(nodes, node =>
+            node.Attributes.TryGetValue("folderPath", out var fp)
+            && fp.GetString() == "Users");
+
+        Assert.Contains(nodes, node =>
+            node.Attributes.TryGetValue("folderPath", out var fp)
+            && fp.GetString() == "Orders");
+
+        // Postman variables should be substituted: {{baseUrl}} resolved and URL path extracted
+        Assert.Contains(nodes, node =>
+            node.Attributes.TryGetValue("httpMethod", out var m) && m.GetString() == "GET"
+            && node.Attributes.TryGetValue("urlTemplate", out var u) && u.GetString() == "/api/users");
+
+        // Unresolved variables become {varName} markers
+        Assert.Contains(nodes, node =>
+            node.Attributes.TryGetValue("httpMethod", out var m) && m.GetString() == "GET"
+            && node.Attributes.TryGetValue("urlTemplate", out var u)
+            && u.GetString() is { } url && url.Contains("{userId}", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void PostmanCallSiteProvider_ParsesBothUrlForms_StringAndObject()
+    {
+        const string json = """
+            {
+              "info": { "name": "TestCollection", "schema": "" },
+              "item": [
+                {
+                  "name": "String URL request",
+                  "request": {
+                    "method": "GET",
+                    "url": "https://example.com/api/string"
+                  }
+                },
+                {
+                  "name": "Object URL request",
+                  "request": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "https://example.com/api/object",
+                      "path": ["api", "object"]
+                    }
+                  }
+                },
+                {
+                  "name": "Object URL with path fallback",
+                  "request": {
+                    "method": "DELETE",
+                    "url": {
+                      "path": ["api", "fallback"]
+                    }
+                  }
+                }
+              ]
+            }
+            """;
+
+        var nodes = PostmanCallSiteProvider.ParseCollection(json, "/tmp/test.postman_collection.json", "/tmp").ToList();
+
+        Assert.Equal(3, nodes.Count);
+
+        Assert.Contains(nodes, n =>
+            n.Attributes.TryGetValue("httpMethod", out var m) && m.GetString() == "GET"
+            && n.Attributes.TryGetValue("urlTemplate", out var u) && u.GetString() == "/api/string");
+
+        Assert.Contains(nodes, n =>
+            n.Attributes.TryGetValue("httpMethod", out var m) && m.GetString() == "POST"
+            && n.Attributes.TryGetValue("urlTemplate", out var u) && u.GetString() == "/api/object");
+
+        Assert.Contains(nodes, n =>
+            n.Attributes.TryGetValue("httpMethod", out var m) && m.GetString() == "DELETE"
+            && n.Attributes.TryGetValue("urlTemplate", out var u) && u.GetString() == "/api/fallback");
+    }
+
+    [Fact]
+    public void PostmanCallSiteProvider_NormalizesVariables_KnownAndUnknown()
+    {
+        const string json = """
+            {
+              "info": { "name": "VarTest", "schema": "" },
+              "item": [
+                {
+                  "name": "Known var substituted",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/items"
+                  }
+                },
+                {
+                  "name": "Unknown var becomes marker",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/items/{{unknownId}}"
+                  }
+                }
+              ],
+              "variable": [
+                { "key": "baseUrl", "value": "https://localhost:5001" }
+              ]
+            }
+            """;
+
+        var nodes = PostmanCallSiteProvider.ParseCollection(json, "/tmp/test.postman_collection.json", "/tmp").ToList();
+
+        Assert.Equal(2, nodes.Count);
+
+        // {{baseUrl}} is resolved and scheme+host stripped — result is /api/items
+        Assert.Contains(nodes, n =>
+            n.Attributes.TryGetValue("urlTemplate", out var u) && u.GetString() == "/api/items");
+
+        // {{unknownId}} becomes {unknownId} marker
+        Assert.Contains(nodes, n =>
+            n.Attributes.TryGetValue("urlTemplate", out var u)
+            && u.GetString() == "/api/items/{unknownId}");
+    }
+
+    [Fact]
     public void JsFetchCallSiteProvider_ExtractsAtLeastThreeCallSiteNodes_FromFrontendFixture()
     {
         var frontendFixtureRoot = GetFrontendFixtureRoot();

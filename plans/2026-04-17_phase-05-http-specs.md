@@ -2,7 +2,7 @@
 
 > Ingest HTTP contract files and reconcile them with the static HTTP graph from phase 04. Preserve provenance, keep disagreements visible, then stop at the gate.
 
-## [ ] Task 1: Ingest OpenAPI and Swagger files
+## [x] Task 1: Ingest OpenAPI and Swagger files
 
 Goal: Turn OpenAPI descriptions into endpoint graph metadata without hiding provenance.
 
@@ -10,12 +10,12 @@ Context: Static HTTP endpoints from phase 04 already exist. Spec ingestion shoul
 
 Acceptance: OpenAPI operations produce endpoint data and `DescribedBy` edges that point back to the spec source.
 
-- [ ] 1.1 Add a minimal OpenAPI reader after confirming the package license is acceptable
-- [ ] 1.2 Emit `HttpEndpoint` data with `source=openapi`
-- [ ] 1.3 Capture `operationId`, tags, and summarized schema references as attributes
-- [ ] 1.4 Emit `DescribedBy` edges to `ExternalRef` nodes that point at the spec file and operation path
+- [x] 1.1 Add a minimal OpenAPI reader after confirming the package license is acceptable
+- [x] 1.2 Emit `HttpEndpoint` data with `source=openapi`
+- [x] 1.3 Capture `operationId`, tags, and summarized schema references as attributes
+- [x] 1.4 Emit `DescribedBy` edges to `ExternalRef` nodes that point at the spec file and operation path
 
-## [ ] Task 2: Ingest `.http` request files
+## [x] Task 2: Ingest `.http` request files
 
 Goal: Capture manual REST client requests as consumer call sites.
 
@@ -23,12 +23,12 @@ Context: `.http` requests should feed the same normalized route model used in ph
 
 Acceptance: Each request block yields an `HttpCallSite` with method, normalized path, headers, and request name context when available.
 
-- [ ] 2.1 Parse `.http` and REST Client files by request block
-- [ ] 2.2 Read the first request line as `METHOD URL`
-- [ ] 2.3 Normalize `{{variable}}` placeholders to `{var}` markers
-- [ ] 2.4 Emit `HttpCallSite` nodes with request-name metadata where present
+- [x] 2.1 Parse `.http` and REST Client files by request block
+- [x] 2.2 Read the first request line as `METHOD URL`
+- [x] 2.3 Normalize `{{variable}}` placeholders to `{var}` markers
+- [x] 2.4 Emit `HttpCallSite` nodes with request-name metadata where present
 
-## [ ] Task 3: Ingest Postman collections
+## [x] Task 3: Ingest Postman collections
 
 Goal: Capture Postman requests as consumer call sites with folder provenance.
 
@@ -36,10 +36,10 @@ Context: Postman collection data can arrive in nested trees and mixed URL format
 
 Acceptance: Every request item in a fixture collection becomes one `HttpCallSite` with collection and folder metadata preserved.
 
-- [ ] 3.1 Walk the Postman `item` tree recursively
-- [ ] 3.2 Parse string and object URL forms
-- [ ] 3.3 Normalize variable substitutions when they are resolvable
-- [ ] 3.4 Emit `HttpCallSite` nodes with collection name and folder-path metadata
+- [x] 3.1 Walk the Postman `item` tree recursively
+- [x] 3.2 Parse string and object URL forms
+- [x] 3.3 Normalize variable substitutions when they are resolvable
+- [x] 3.4 Emit `HttpCallSite` nodes with collection name and folder-path metadata
 
 ## [ ] Task 4: Reconcile spec data with static HTTP graph data
 
