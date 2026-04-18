@@ -41,7 +41,7 @@ Acceptance: Every request item in a fixture collection becomes one `HttpCallSite
 - [x] 3.3 Normalize variable substitutions when they are resolvable
 - [x] 3.4 Emit `HttpCallSite` nodes with collection name and folder-path metadata
 
-## [ ] Task 4: Reconcile spec data with static HTTP graph data
+## [x] Task 4: Reconcile spec data with static HTTP graph data
 
 Goal: Merge duplicate endpoints by route identity while preserving disagreements and provenance.
 
@@ -49,12 +49,12 @@ Context: Use the normalized `(method, path, version-token)` identity introduced 
 
 Acceptance: Matching endpoints merge source data without dropping conflicting values or overwriting one source with another.
 
-- [ ] 4.1 Merge endpoints by normalized method, normalized path, and version token
-- [ ] 4.2 Union attributes and combine `SourceRefs` from all sources
-- [ ] 4.3 Keep disagreements, such as different response metadata, visible as separate attributes
-- [ ] 4.4 Add unit tests for realistic merge and disagreement cases
+- [x] 4.1 Merge endpoints by normalized method, normalized path, and version token
+- [x] 4.2 Union attributes and combine `SourceRefs` from all sources
+- [x] 4.3 Keep disagreements, such as different response metadata, visible as separate attributes
+- [x] 4.4 Add unit tests for realistic merge and disagreement cases
 
-## [ ] Task 5: Prove spec ingestion on fixtures
+## [x] Task 5: Prove spec ingestion on fixtures
 
 Goal: Validate all three spec-source paths against committed sample inputs.
 
@@ -62,28 +62,28 @@ Context: Extend `tests/Fixtures/` with one OpenAPI file, one `.http` file, and o
 
 Acceptance: Integration tests show all supported spec sources ingest successfully and reconcile with existing endpoints.
 
-- [ ] 5.1 Add deterministic fixture files for OpenAPI, `.http`, and Postman
-- [ ] 5.2 Add integration tests for each source type
-- [ ] 5.3 Assert merged endpoints keep full provenance
-- [ ] 5.4 Assert disagreement cases remain visible in the graph
+- [x] 5.1 Add deterministic fixture files for OpenAPI, `.http`, and Postman
+- [x] 5.2 Add integration tests for each source type
+- [x] 5.3 Assert merged endpoints keep full provenance
+- [x] 5.4 Assert disagreement cases remain visible in the graph
 
-## [ ] Task 6: Pass the validate-stop gate
+## [x] Task 6: Pass the validate-stop gate
 
 Goal: Close phase 05 with verified spec ingestion and halt before phase 06.
 
 Acceptance: All supported spec inputs ingest, reconcile correctly, and the summary output is signed.
 
-- [ ] 6.1 Prove OpenAPI, `.http`, and Postman fixture ingestion is green
-- [ ] 6.2 Prove reconciliation preserves provenance across duplicate endpoints
-- [ ] 6.3 Prove disagreement cases keep both values without silent drops
-- [ ] 6.4 Print a signed summary and halt for human sign-off
+- [x] 6.1 Prove OpenAPI, `.http`, and Postman fixture ingestion is green
+- [x] 6.2 Prove reconciliation preserves provenance across duplicate endpoints
+- [x] 6.3 Prove disagreement cases keep both values without silent drops
+- [x] 6.4 Print a signed summary and halt for human sign-off
 
-## [ ] Task 7: Sync product definition
+## [x] Task 7: Sync product definition
 
 Goal: Keep product docs aligned with HTTP spec ingestion support.
 
 Context: Update #[[file:docs/PROJECT_DEFINITION.md]] and #[[file:docs/REQUIREMENT_DEFINITION.md]] after validation.
 
-- [ ] 7.1 Review `docs/PROJECT_DEFINITION.md` against new spec-ingestion behavior
-- [ ] 7.2 Update touched phase-05 requirements in `docs/REQUIREMENT_DEFINITION.md`
-- [ ] 7.3 Respond with `Product definition: updated` or `Product definition: no update required`
+- [x] 7.1 Review `docs/PROJECT_DEFINITION.md` against new spec-ingestion behavior
+- [x] 7.2 Update touched phase-05 requirements in `docs/REQUIREMENT_DEFINITION.md`
+- [x] 7.3 Respond with `Product definition: updated` or `Product definition: no update required`

@@ -77,11 +77,11 @@
 
 | Status | Wymaganie |
 |---|---|
-| `[ ]` | Ingestion specyfikacji OpenAPI/Swagger (JSON i YAML) |
-| `[ ]` | Ingestion plików `.http` (REST Client format) |
-| `[ ]` | Ingestion kolekcji Postman (JSON v2.1) |
-| `[ ]` | Endpointy ze specyfikacji uzgadniane z endpointami z analizy statycznej |
-| `[ ]` | Rozbieżności raportowane jako krawędzie `SpecMismatch` lub atrybut węzła |
+| `[x]` | Ingestion specyfikacji OpenAPI/Swagger (JSON i YAML) |
+| `[x]` | Ingestion plików `.http` (REST Client format) |
+| `[x]` | Ingestion kolekcji Postman (JSON v2.1) |
+| `[x]` | Endpointy ze specyfikacji uzgadniane z endpointami z analizy statycznej |
+| `[x]` | Rozbieżności raportowane jako krawędzie `SpecMismatch` lub atrybut węzła |
 
 ---
 

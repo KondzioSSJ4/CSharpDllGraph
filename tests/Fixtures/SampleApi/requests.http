@@ -1,0 +1,16 @@
+###
+# @name listUsers
+GET https://localhost:5001/api/users
+Accept: application/json
+
+###
+POST https://localhost:5001/api/users
+Content-Type: application/json
+
+{
+  "name": "Alice"
+}
+
+### Get user by id
+GET https://localhost:5001/api/users/{{userId}}
+Accept: application/json
