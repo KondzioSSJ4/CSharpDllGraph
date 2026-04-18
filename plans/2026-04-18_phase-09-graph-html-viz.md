@@ -1,4 +1,4 @@
-# Plan: Phase 09 — Static HTML Graph Visualizer
+﻿# Plan: Phase 09 — Static HTML Graph Visualizer
 
 > Add a self-contained graph.html that the CLI injects with graph data and the user opens directly in a browser — no server needed.
 
@@ -20,7 +20,7 @@
 {
   "id": "T1",
   "title": "Create graph.html template as embedded resource",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "backend-csharp",
   "dependsOn": [],
   "paths": [
@@ -62,7 +62,7 @@
 {
   "id": "T2",
   "title": "Implement GraphHtmlExporter",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "backend-csharp",
   "dependsOn": [
     "T1"
@@ -100,7 +100,7 @@
 {
   "id": "T3",
   "title": "Wire GraphHtmlExporter into build and update commands",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "backend-csharp",
   "dependsOn": [
     "T2"
@@ -122,13 +122,13 @@
 }
 ```
 
-## Task T4: Update .gitignore
+## Task T4: Update .gitignore for generated HTML
 
 ```task
 {
   "id": "T4",
   "title": "Update .gitignore for generated HTML",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "docs-product",
   "dependsOn": [
     "T3"
@@ -154,7 +154,7 @@
 {
   "id": "T5",
   "title": "Document graph visualization in README.md",
-  "status": "[ ]",
+  "status": "[x]",
   "agent": "docs-product",
   "dependsOn": [
     "T4"

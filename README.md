@@ -76,6 +76,20 @@ Run a query from CLI:
 dotnet run --project src/CSharpDllGraph.Cli -- query list_dependencies --workspace csharpdllgraph
 ```
 
+## Graph Visualization
+
+After every `build` or `update` command, the CLI also writes `graph.html` to `.csharpdllgraph/graph.html` in the target workspace.
+
+Open `.csharpdllgraph/graph.html` in any browser. No web server needed.
+
+The page shows a force-directed graph of the generated nodes and edges.
+
+Use the filter panel to show or hide node and edge types.
+
+Click any node to inspect its attributes and source locations.
+
+Use search to find and highlight matching nodes in the graph.
+
 Registry location:
 
 - Windows: `%APPDATA%\CSharpDllGraph\workspaces.json`

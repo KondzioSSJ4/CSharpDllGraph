@@ -10,4 +10,8 @@
     <ProjectReference Include="..\CSharpDllGraph.Providers.Dotnet\CSharpDllGraph.Providers.Dotnet.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\graph.html" />
+  </ItemGroup>
+
 </Project>

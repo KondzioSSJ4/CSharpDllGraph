@@ -1,4 +1,5 @@
 using System.Text.Json;
+using CSharpDllGraph.Cli.Export;
 using CSharpDllGraph.Engine.Watch;
 using CSharpDllGraph.Engine.Graph;
 using CSharpDllGraph.Engine.Http;
@@ -90,6 +91,8 @@ internal static class CliApplication
             snapshot.Manifest.LastBuildUtc,
             snapshot.Nodes.Count,
             snapshot.Edges.Count));
+        await GraphHtmlExporter.ExportAsync(graphPath, resolvedWorkspaceRoot, cancellationToken);
+        Console.WriteLine("Graph visualization: .csharpdllgraph/graph.html");
 
         return 0;
     }
