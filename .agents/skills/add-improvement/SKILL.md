@@ -1,7 +1,7 @@
 ---
 name: add-improvement
 description: >
-  Creates a new improvement note file in the improvements/ directory. Use whenever the user wants to add, record, or save an idea for a future feature, improvement, or enhancement — even if they say "zanotuj pomysł", "dodaj improvement", "zapisz to jako improvement", "chcę zapamiętać że...", or describes something the app could do but doesn't yet. The output is a structured .md file following the project's improvement format.
+  Creates a new improvement note file in the improvements/ directory. Use whenever the user wants to add, record, or save an idea for a future feature, improvement, or enhancement — even if they say "note this idea", "add improvement", "save this as improvement", "I want to remember that...", or describes something the app could do but doesn't yet. The output is a structured .md file following the project's improvement format.
 ---
 
 # add-improvement
@@ -18,31 +18,31 @@ Creates a file in `improvements/YYYY-MM-DD_slug.md` based on what the user descr
 
 ```markdown
 ---
-title: <tytuł po polsku>
+title: <title in English>
 score: <N>/10
 category: <category>
 ---
 
-# <tytuł po polsku>
+# <title in English>
 
 **Score: <N>/10**
 **Category:** <category>
 
-## Czego oczekujemy
+## What we expect
 
-<Co użytkownik/system ma móc zrobić. Tylko to co wynika z opisu.>
+<What the user/system should be able to do. Only what follows from the description.>
 
-## Zakres funkcji
+## Feature scope
 
-<Lista rzeczy do zrobienia. Tylko to co wynika z opisu — nie wymyślaj.>
+<List of things to do. Only what follows from the description — do not invent.>
 ```
 
 ## Rules
 
 - Write only what the user stated. Do not invent scope, integrations, or decisions.
 - If the user gave little detail, write little. Short is fine.
-- Sections `Integracja z aplikacją` and `Kluczowe decyzje do podjęcia przy planowaniu` are optional — add only if the user mentioned relevant details.
-- Language: Polish for all content.
+- Sections `App integration` and `Key decisions for planning` are optional — add only if the user mentioned relevant details.
+- Language: English for all content.
 
 ## Categories
 

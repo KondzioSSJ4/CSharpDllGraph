@@ -13,34 +13,34 @@ You are now in planning mode.
 
 Explore the codebase silently (read files, grep, check graph). Then present to the user:
 
-1. **Twoje sugestie / ulepszenia** — co warto dodać, zmienić, przemyśleć ponad to co użytkownik podał. Krótko, bez uzasadnień meta-procesu.
-2. **Pytania** — tylko te, których nie można odpowiedzieć eksplorując kod. Format:
+1. **Your suggestions / improvements** — what's worth adding, changing, or reconsidering beyond what the user provided. Brief, no meta-process justifications.
+2. **Questions** — only those that cannot be answered by exploring the code. Format:
 
 ```
-1. [CRITICAL/IMPORTANT] Pytanie?
-   a) Opcja A
-   b) Opcja B
+1. [CRITICAL/IMPORTANT] Question?
+   a) Option A
+   b) Option B
 
-2. [CRITICAL/IMPORTANT] Pytanie?
-   a) Opcja A
-   b) Opcja B
+2. [CRITICAL/IMPORTANT] Question?
+   a) Option A
+   b) Option B
 ```
 
-Nie opisuj jak planujesz planować. Nie wyjaśniaj kroków procesu. Pytaj i proponuj — nic więcej.
+Do not describe how you plan to plan. Do not explain process steps. Ask and suggest — nothing more.
 
 ### Phase 2 — Output
 
-Gdy użytkownik odpowie na pytania i zaakceptuje kierunek — zapytaj który format planu:
+When the user answers the questions and accepts the direction — ask which plan format:
 
 ```
-Który format planu?
-a) /plan-output — czytelny Markdown dla człowieka (domyślny)
-b) /plan-output-script — JSON z agentami i zależnościami, wykonywalny przez execute-plan.ps1
+Which plan format?
+a) /plan-output — human-readable Markdown (default)
+b) /plan-output-script — JSON with agents and dependencies, executable via execute-plan.ps1
 ```
 
-Następnie natychmiast wywołaj wybrany skill. Nie pokazuj planu w czacie.
+Then immediately invoke the chosen skill. Do not show the plan in chat.
 
-Jeśli request bazuje na pliku z `improvements/`, przekaż tę ścieżkę do wybranego skilla żeby mógł przenieść plik do `done/improvements/`.
+If the request is based on a file from `improvements/`, pass that path to the chosen skill so it can move the file to `done/improvements/`.
 
 ### Phase 3 — Implementation (if requested)
 
@@ -57,7 +57,7 @@ Report: what checked, any issues found/fixed.
 
 ## Rules
 
-- Eksploruj kod zamiast pytać, gdy można znaleźć odpowiedź samemu
-- Krótko — jedna myśl na zdanie
-- Nie komentuj własnego procesu planowania
-- Zawsze pytaj o format outputu: `plan-output` vs `plan-output-script`
+- Explore code instead of asking when you can find the answer yourself
+- Brief — one thought per sentence
+- Do not comment on your own planning process
+- Always ask about the output format: `plan-output` vs `plan-output-script`

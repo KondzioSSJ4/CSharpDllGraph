@@ -30,21 +30,21 @@ Goal: Central properties via `Directory.Build.targets` to avoid repetition acros
 
 Goal: Create `docs/PROJECT_DEFINITION.md` and `docs/REQUIREMENT_DEFINITION.md` with initial v1 scope.
 
-Context: Follow KanbnMCP convention — Polish prose in these docs, English elsewhere. `REQUIREMENT_DEFINITION.md` uses `[x] [~] [ ]` status symbols.
+Context: `REQUIREMENT_DEFINITION.md` uses `[x] [~] [ ]` status symbols.
 
-- [x] 3.1 `docs/PROJECT_DEFINITION.md` — cel produktu, użytkownicy (AI w trybie code-gen, developerzy), scope v1 (6 narzędzi MCP), non-goals (brak runtime capture, brak LLM w narzędziach, brak merge workspace-ów, brak providerów innych niż .NET)
-- [x] 3.2 `docs/REQUIREMENT_DEFINITION.md` — wymagania pogrupowane po fazach 0–7, każde ze statusem `[ ]`
-- [x] 3.3 Nagłówek `PROJECT_DEFINITION` wskazuje `plans/README.md` jako źródło faz i porządku
+- [x] 3.1 `docs/PROJECT_DEFINITION.md` — product goal, users (AI in code-gen mode, developers), scope v1 (6 MCP tools), non-goals (no runtime capture, no LLM in tools, no workspace merges, no providers other than .NET)
+- [x] 3.2 `docs/REQUIREMENT_DEFINITION.md` — requirements grouped by phases 0–7, each with status `[ ]`
+- [x] 3.3 `PROJECT_DEFINITION` header points to `plans/README.md` as the source of phases and order
 
 ## [x] Task 4: AGENTS.md workflow
 
 Goal: Root-level `AGENTS.md` describing execution rules binding for every future agent.
 
-- [x] 4.1 Wymóg czytania `PROJECT_DEFINITION` + `REQUIREMENT_DEFINITION` na początku każdego promptu
-- [x] 4.2 Definicja symboli statusu `[x] [~] [ ]`
-- [x] 4.3 Standard jakości testów: realne zachowania, bez tautologicznych mocków; testy dodajemy wyłącznie na żądanie
-- [x] 4.4 Język: kod i identyfikatory po angielsku; dokumenty produktowe po polsku
-- [x] 4.5 Reguła STOP po każdej fazie — link do `plans/README.md`; zakaz auto-otwierania kolejnej fazy
+- [x] 4.1 Requirement to read `PROJECT_DEFINITION` + `REQUIREMENT_DEFINITION` at the start of each prompt
+- [x] 4.2 Definition of status symbols `[x] [~] [ ]`
+- [x] 4.3 Test quality standard: real behaviors, no tautological mocks; tests added only on request
+- [x] 4.4 Language: code and identifiers in English; product documents in English
+- [x] 4.5 STOP rule after each phase — link to `plans/README.md`; no auto-opening of the next phase
 
 ## [x] Task 5: Empty MCP host on stdio
 
