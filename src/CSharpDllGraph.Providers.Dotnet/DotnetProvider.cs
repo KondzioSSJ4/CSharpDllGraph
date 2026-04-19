@@ -36,7 +36,7 @@ public sealed class DotnetProvider : IGraphProvider
             ?? throw new InvalidOperationException("Solution directory is required.");
 
         var collector = new GraphCollector();
-        var packageFragmentCache = new FilePackageFragmentCache(context.WorkspaceRootPath);
+        var packageFragmentCache = new ParallelFilePackageFragmentCache(context.WorkspaceRootPath);
         var packages = new Dictionary<PackageIdentity, PackageWorkItem>(PackageIdentityComparer.Instance);
         var projectPackageVersionsByPath = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
 
@@ -94,6 +94,11 @@ public sealed class DotnetProvider : IGraphProvider
             .ToArray();
 
         _logger.LogInformation("DotnetProvider: emitting structure for {PackageCount} packages.", packageList.Length);
+
+        var prewarmTargets = packageList
+            .Select(static p => (p.Identity.Name, p.Identity.Version))
+            .ToArray();
+        await packageFragmentCache.PreWarmAsync(prewarmTargets, _logger, cancellationToken);
 
         await EmitPackagesParallelAsync(packageList, collector, packageFragmentCache, cancellationToken);
 
@@ -402,7 +407,7 @@ public sealed class DotnetProvider : IGraphProvider
     private async Task EmitPackagesParallelAsync(
         IReadOnlyList<PackageWorkItem> packageList,
         GraphCollector collector,
-        IPackageFragmentCache cache,
+        ParallelFilePackageFragmentCache cache,
         CancellationToken cancellationToken)
     {
         var parallelism = Math.Max(Environment.ProcessorCount * 2 - 1, 4);
