@@ -11,6 +11,8 @@
 
 ---
 
+> **Early development notice:** CSharpDllGraph is under active development. Some features may be incomplete, rough around the edges, or subject to change. Feedback and bug reports are very welcome.
+
 CSharpDllGraph scans your `.sln` or `.slnx` file and builds a queryable graph of your entire solution — projects, packages, symbols, and HTTP routes — without running your code.
 
 Use it from the **CLI** to explore and visualize dependencies, or plug it into your **AI assistant** as an MCP server to answer questions about your codebase in real time.
