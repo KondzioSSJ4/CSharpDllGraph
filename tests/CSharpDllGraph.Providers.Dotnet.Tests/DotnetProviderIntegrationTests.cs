@@ -3,6 +3,7 @@ using CSharpDllGraph.Engine.Graph;
 using CSharpDllGraph.Engine.Providers;
 using CSharpDllGraph.Engine.Store;
 using CSharpDllGraph.Providers.Dotnet;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CSharpDllGraph.Providers.Dotnet.Tests;
 
@@ -16,7 +17,7 @@ public sealed class DotnetProviderIntegrationTests
         var workspacePath = Path.Combine(Path.GetTempPath(), $"csharpdllgraph-phase02-{Guid.NewGuid():N}");
         Directory.CreateDirectory(workspacePath);
 
-        var orchestrator = new GraphBuildPipeline([new DotnetProvider()]);
+        var orchestrator = new GraphBuildPipeline([new DotnetProvider(NullLogger<DotnetProvider>.Instance)], NullLogger<GraphBuildPipeline>.Instance);
         var store = new JsonWorkspaceStore(workspacePath);
         await orchestrator.BuildAndPersistAsync(
             GraphBuildContext.Create(solutionPath, workspacePath),

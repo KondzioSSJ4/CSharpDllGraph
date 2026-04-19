@@ -3,6 +3,7 @@ using CSharpDllGraph.Engine.Http;
 using CSharpDllGraph.Engine.Providers;
 using CSharpDllGraph.Engine.Store;
 using CSharpDllGraph.Providers.Dotnet.Http;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CSharpDllGraph.Providers.Dotnet.Tests;
 
@@ -316,7 +317,7 @@ public sealed class HttpStaticAnalysisTests
             new ControllerEndpointProvider(),
             new MinimalApiEndpointProvider(),
             new HttpClientCallSiteProvider()
-        ]);
+        ], NullLogger<GraphBuildPipeline>.Instance);
 
         var store = new JsonWorkspaceStore(workspacePath);
         await pipeline.BuildAndPersistAsync(

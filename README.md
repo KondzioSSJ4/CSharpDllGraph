@@ -1,194 +1,128 @@
 # CSharpDllGraph
 
-CSharpDllGraph is a .NET 10 toolset for static graph analysis of `.NET` solutions.
+<p align="center">
+  <img src="icon.png" alt="CSharpDllGraph" width="120" />
+</p>
 
-It has two entry points:
+<p align="center">
+  <strong>Understand your .NET codebase at a glance.</strong><br/>
+  Static dependency analysis and interactive graph visualization for .NET solutions.
+</p>
 
-- `CSharpDllGraph.Cli` for building, updating, watching, and querying workspace graphs
-- `CSharpDllGraph.Mcp` for exposing the query layer as an MCP server over stdio
+---
 
-The MCP server is read-only. It does not modify user code.
+CSharpDllGraph scans your `.sln` or `.slnx` file and builds a queryable graph of your entire solution — projects, packages, symbols, and HTTP routes — without running your code.
 
-## What it does
+Use it from the **CLI** to explore and visualize dependencies, or plug it into your **AI assistant** as an MCP server to answer questions about your codebase in real time.
 
-The tool builds a graph from a `.sln` or `.slnx` file and exposes queries for:
+## Why this exists
 
-- package API inspection
-- dependency listing
-- version conflict detection
-- symbol usage lookup
-- canonical usage suggestions
-- HTTP call tracing across registered workspaces
+AI coding assistants are great at reasoning about code — but they struggle with NuGet packages. When a package is poorly documented, internal, or just not well-known, the assistant has no reliable way to understand what it can do without fetching and parsing the package contents on every request. That's slow, unreliable, and often impossible for private packages.
+
+A related problem: online documentation almost always describes the latest version of a package, but real projects pin older versions. When an API changed between versions, the docs mislead more than they help — and finding version-specific documentation is often a dead end.
+
+CSharpDllGraph solves both problems by pre-analyzing your solution and exposing the results as an MCP server. Your AI assistant can then answer questions about projects and packages instantly, based on the exact versions your solution actually uses — not whatever is current on NuGet.org. This is especially useful for internal NuGet packages or large solutions where the dependency graph isn't obvious from filenames alone.
+
+> **Note:** This project contains no AI itself. All the code was written by AI (Claude), but the tool it produces is purely static analysis — no models, no inference, no external calls.
+
+## What you get
+
+- **Interactive graph** — a force-directed HTML visualization of your solution, ready to open in any browser
+- **Dependency queries** — list what depends on what, across projects and NuGet packages
+- **Version conflict detection** — find packages pulled in at multiple versions
+- **Symbol usage lookup** — see where any type or method is used across the solution
+- **HTTP call tracing** — trace a route through controllers, services, and repositories
+- **AI integration** — expose all queries as MCP tools so Claude, Kiro, Codex, or any MCP-compatible assistant can reason about your code
 
 ## Requirements
 
 - .NET 10 SDK
 - Windows, macOS, or Linux
-- a `.sln` or `.slnx` file in the target workspace
+- A `.sln` or `.slnx` file in your workspace
 
-## Build
+## Getting started
+
+**Clone and build:**
 
 ```bash
+git clone https://github.com/your-org/CSharpDllGraph
+cd CSharpDllGraph
 dotnet build CSharpDllGraph.slnx
 ```
 
-## Run the CLI
+**Build the graph for your solution:**
 
-Show CLI help:
+```bash
+dotnet run --project src/CSharpDllGraph.Cli -- build /path/to/your/solution --name myproject
+```
+
+**Open the visualization:**
+
+After the build, open `.csharpdllgraph/graph.html` in your browser. No web server needed.
+
+**Run a query:**
+
+```bash
+dotnet run --project src/CSharpDllGraph.Cli -- query list_dependencies --workspace myproject
+```
+
+## CLI reference
+
+| Command | Description |
+|---|---|
+| `build <path> --name <name>` | Build a graph from a solution |
+| `update <path> --name <name>` | Rebuild an existing graph |
+| `watch <path> --name <name>` | Watch for changes and rebuild incrementally |
+| `workspace list` | List all registered workspaces |
+| `query <tool> --workspace <name>` | Run a query against a workspace |
+
+Show all options:
 
 ```bash
 dotnet run --project src/CSharpDllGraph.Cli -- help
 ```
 
-Build graph for a workspace:
+## Graph visualization
+
+Every `build` or `update` writes `.csharpdllgraph/graph.html` to your workspace root.
+
+- Filter nodes and edges by type using the filter panel
+- Click any node to inspect its attributes and source locations
+- Search to highlight matching nodes
+
+## MCP server
+
+The MCP server exposes the full query layer over stdio so AI assistants can reason about your solution. It is **read-only** and never modifies your code.
+
+**Start the server:**
 
 ```bash
-dotnet run --project src/CSharpDllGraph.Cli -- build . --name csharpdllgraph
+dotnet run --project src/CSharpDllGraph.Mcp -- --workspace-path /path/to/your/solution
 ```
 
-Build graph for a specific solution:
+On first run, the server builds the graph automatically. Embedded file watching keeps it fresh afterwards — no manual rebuild needed.
+
+**Available MCP tools:**
+
+| Tool | Description |
+|---|---|
+| `describe_package_api` | Inspect the public API of a NuGet package |
+| `list_dependencies` | List project and package dependencies |
+| `find_version_conflicts` | Detect packages used at multiple versions |
+| `find_usages` | Find all usages of a symbol across the solution |
+| `suggest_usage` | Get canonical usage examples for a symbol |
+| `trace_http_call` | Trace an HTTP route through the codebase |
+| `ping` | Health check |
+
+## Connect to your AI assistant
+
+### Claude Code
 
 ```bash
-dotnet run --project src/CSharpDllGraph.Cli -- build . --solution CSharpDllGraph.slnx --name csharpdllgraph
+claude mcp add --scope project csharpdllgraph -- dotnet run --project /path/to/CSharpDllGraph/src/CSharpDllGraph.Mcp --
 ```
 
-Update existing graph:
-
-```bash
-dotnet run --project src/CSharpDllGraph.Cli -- update . --name csharpdllgraph
-```
-
-Watch workspace and rebuild incrementally:
-
-```bash
-dotnet run --project src/CSharpDllGraph.Cli -- watch . --solution CSharpDllGraph.slnx --name csharpdllgraph
-```
-
-List registered workspaces:
-
-```bash
-dotnet run --project src/CSharpDllGraph.Cli -- workspace list
-```
-
-Run a query from CLI:
-
-```bash
-dotnet run --project src/CSharpDllGraph.Cli -- query list_dependencies --workspace csharpdllgraph
-```
-
-## Graph Visualization
-
-After every `build` or `update` command, the CLI also writes `graph.html` to `.csharpdllgraph/graph.html` in the target workspace.
-
-Open `.csharpdllgraph/graph.html` in any browser. No web server needed.
-
-The page shows a force-directed graph of the generated nodes and edges.
-
-Use the filter panel to show or hide node and edge types.
-
-Click any node to inspect its attributes and source locations.
-
-Use search to find and highlight matching nodes in the graph.
-
-Registry location:
-
-- Windows: `%APPDATA%\CSharpDllGraph\workspaces.json`
-- Linux/macOS: `$XDG_CONFIG_HOME/csharpdllgraph/workspaces.json` or `~/.config/csharpdllgraph/workspaces.json`
-
-Default graph output path:
-
-- `<workspace-root>/.csharpdllgraph/graph`
-
-## Run the MCP server
-
-Start the MCP server over stdio:
-
-```bash
-dotnet run --project src/CSharpDllGraph.Mcp --
-```
-
-Pass a workspace explicitly:
-
-```bash
-dotnet run --project src/CSharpDllGraph.Mcp -- --workspace-path /absolute/path/to/your/project
-```
-
-Pass a specific solution file when the workspace contains multiple `.sln` or `.slnx` files:
-
-```bash
-dotnet run --project src/CSharpDllGraph.Mcp -- --workspace-path /absolute/path/to/your/project --solution-path /absolute/path/to/your/project/YourSolution.sln
-```
-
-Important:
-
-- the default log file is `src/CSharpDllGraph.Mcp/logs/mcp-actions.log` when started from that project folder
-
-## Per-Project Configuration
-
-The MCP server resolves the target workspace from one of two sources:
-
-1. `--workspace-path /absolute/path/to/your/project`
-2. `.csharpdllgraph.json`
-
-Priority:
-
-- `--workspace-path` and `--solution-path` override `.csharpdllgraph.json`
-
-If `--workspace-path` is not passed, the server searches from the current working directory upward for `.csharpdllgraph.json`.
-
-Example `.csharpdllgraph.json`:
-
-```json
-{
-  "workspacePath": "/absolute/path/to/your/project",
-  "graphPath": ".csharpdllgraph/graph",
-  "solutionPath": "YourSolution.slnx"
-}
-```
-
-Schema:
-
-- `workspacePath` required. Workspace root path.
-- `graphPath` optional. Relative paths resolve from `workspacePath`. Default: `.csharpdllgraph/graph`
-- `solutionPath` optional. Relative paths resolve from `workspacePath`. Use it when the workspace has multiple `.sln` or `.slnx` files.
-
-Behavior:
-
-- On first run, MCP builds the graph automatically if `manifest.json` is missing.
-- After startup, embedded file watching keeps the graph fresh with incremental rebuilds.
-
-## Quick local smoke test
-
-Use the fixture workspace:
-
-```bash
-dotnet run --project src/CSharpDllGraph.Cli -- build tests/Fixtures/SampleApi --name sample-api
-dotnet run --project src/CSharpDllGraph.Cli -- query trace_http_call --method GET --path /users --workspace sample-api
-```
-
-Then start MCP:
-
-```bash
-dotnet run --project src/CSharpDllGraph.Mcp --
-```
-
-## MCP tools exposed by the server
-
-- `ping`
-- `describe_package_api`
-- `list_dependencies`
-- `find_version_conflicts`
-- `find_usages`
-- `suggest_usage`
-- `trace_http_call`
-
-## Configure as MCP for Kiro
-
-Kiro loads MCP servers from workspace or user settings. Workspace config file:
-
-- `.kiro/settings/mcp.json`
-
-Example with `--workspace-path`:
+Or add to `.mcp.json` in your project root:
 
 ```json
 {
@@ -198,136 +132,95 @@ Example with `--workspace-path`:
       "args": [
         "run",
         "--project",
-        "D:\\GIT\\CSharpDllGraph\\src\\CSharpDllGraph.Mcp",
+        "/path/to/CSharpDllGraph/src/CSharpDllGraph.Mcp",
         "--",
         "--workspace-path",
-        "C:\\absolute\\path\\to\\your\\project"
-      ],
-      "env": {}
-    }
-  }
-}
-```
-
-When the workspace contains multiple solution files, add `--solution-path`:
-
-```json
-{
-  "mcpServers": {
-    "csharpdllgraph": {
-      "command": "dotnet",
-      "args": [
-        "run",
-        "--project",
-        "D:\\GIT\\CSharpDllGraph\\src\\CSharpDllGraph.Mcp",
-        "--",
-        "--workspace-path",
-        "C:\\absolute\\path\\to\\your\\project",
-        "--solution-path",
-        "C:\\absolute\\path\\to\\your\\project\\YourSolution.sln"
-      ],
-      "env": {}
-    }
-  }
-}
-```
-
-Alternatively, place `.csharpdllgraph.json` in your project root and omit `--workspace-path` — the server will find it automatically.
-
-The MCP server auto-builds the graph on first run and keeps it fresh via embedded file watching — no separate CLI step needed.
-
-## Configure as MCP for Codex
-
-Add the server with Codex CLI:
-
-```bash
-codex mcp add csharpdllgraph -- dotnet run --project D:\GIT\CSharpDllGraph\src\CSharpDllGraph.Mcp --
-```
-
-Check registration:
-
-```bash
-codex mcp list
-```
-
-Equivalent `~/.codex/config.toml` entry:
-
-```toml
-[mcp_servers.csharpdllgraph]
-command = "dotnet"
-args = ["run", "--project", "D:\\GIT\\CSharpDllGraph\\src\\CSharpDllGraph.Mcp", "--"]
-```
-
-## Configure as MCP for Claude Code
-
-Add the server with Claude Code CLI:
-
-```bash
-claude mcp add --scope project csharpdllgraph -- dotnet run --project D:\GIT\CSharpDllGraph\src\CSharpDllGraph.Mcp --
-```
-
-Claude Code can also load project MCP config from:
-
-- `.mcp.json`
-
-Example:
-
-```json
-{
-  "mcpServers": {
-    "csharpdllgraph": {
-      "command": "dotnet",
-      "args": [
-        "run",
-        "--project",
-        "D:\\GIT\\CSharpDllGraph\\src\\CSharpDllGraph.Mcp",
-        "--"
-      ],
-      "env": {}
-    }
-  }
-}
-```
-
-Claude Desktop `claude_desktop_config.json` example:
-
-```json
-{
-  "mcpServers": {
-    "CSharpDllGraph": {
-      "command": "dotnet",
-      "args": [
-        "run",
-        "--project",
-        "D:\\GIT\\CSharpDllGraph\\src\\CSharpDllGraph.Mcp",
-        "--",
-        "--workspace-path",
-        "/absolute/path/to/your/project"
+        "/path/to/your/solution"
       ]
     }
   }
 }
 ```
 
-## Notes
+### Kiro
 
-- Use absolute paths in MCP client config.
-- `dotnet run` is easiest for development.
-- For faster startup in repeated use, publish the MCP project and point clients to the published executable.
-- The server uses stdio transport only.
+Add to `.kiro/settings/mcp.json`:
 
-## Publish optional standalone binaries
+```json
+{
+  "mcpServers": {
+    "csharpdllgraph": {
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "/path/to/CSharpDllGraph/src/CSharpDllGraph.Mcp",
+        "--",
+        "--workspace-path",
+        "/path/to/your/solution"
+      ],
+      "env": {}
+    }
+  }
+}
+```
 
-CLI:
+### Codex
+
+```bash
+codex mcp add csharpdllgraph -- dotnet run --project /path/to/CSharpDllGraph/src/CSharpDllGraph.Mcp --
+```
+
+Or add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.csharpdllgraph]
+command = "dotnet"
+args = ["run", "--project", "/path/to/CSharpDllGraph/src/CSharpDllGraph.Mcp", "--"]
+```
+
+## Per-project configuration
+
+Drop a `.csharpdllgraph.json` file in your solution root to avoid passing flags every time:
+
+```json
+{
+  "workspacePath": "/path/to/your/solution",
+  "graphPath": ".csharpdllgraph/graph",
+  "solutionPath": "YourSolution.slnx"
+}
+```
+
+The MCP server and CLI will find this file automatically. Command-line flags take precedence if both are present.
+
+## Publish standalone binaries
+
+For faster startup, publish self-contained binaries instead of using `dotnet run`:
 
 ```bash
 dotnet publish src/CSharpDllGraph.Cli -c Release -o .artifacts/cli
-```
-
-MCP:
-
-```bash
 dotnet publish src/CSharpDllGraph.Mcp -c Release -o .artifacts/mcp
 ```
 
-Then point MCP clients to the published executable instead of `dotnet run`.
+Then point your MCP client config to the published executable.
+
+## Registry locations
+
+Workspace registrations are stored at:
+
+- **Windows:** `%APPDATA%\CSharpDllGraph\workspaces.json`
+- **Linux/macOS:** `~/.config/csharpdllgraph/workspaces.json`
+
+## Recommended `.gitignore` patterns
+
+Add these to your solution's `.gitignore` to avoid committing generated graph data and build cache:
+
+```gitignore
+# CSharpDllGraph — generated graph data and build cache
+.csharpdllgraph/
+.artifacts/
+```
+
+## Known issues
+
+- **MCP tool requires multiple re-enables on large solutions** — if your solution references a large number of NuGet packages, the MCP server may time out during initial graph construction. The AI assistant will report the tool as unavailable. Re-enable the tool in your assistant's settings and retry; it may take two or three attempts before the graph is fully built and the server is responsive.

@@ -2,6 +2,7 @@ using CSharpDllGraph.Engine.Config;
 using CSharpDllGraph.Engine.Http;
 using CSharpDllGraph.Engine.Providers;
 using CSharpDllGraph.Engine.Query;
+using CSharpDllGraph.Engine.Statistics;
 using CSharpDllGraph.Engine.Watch;
 using CSharpDllGraph.Mcp.Logging;
 using CSharpDllGraph.Mcp.Tools;
@@ -38,6 +39,7 @@ builder.Configuration
     .AddEnvironmentVariables();
 
 var logFilePath = builder.Configuration["Mcp:LogFilePath"] ?? "logs/mcp-actions.log";
+var statisticsFilePath = Path.Combine(workspaceConfig.RootPath, ".csharpdllgraph", "statistics.json");
 
 using var fileLoggerProvider = new FileLoggerProvider(logFilePath);
 
@@ -50,6 +52,7 @@ builder.Services
     .AddSingleton<IWorkspaceContext, WorkspaceContext>()
     .AddSingleton<IGraphQueryService, SingleWorkspaceQueryService>()
     .AddSingleton<ICrossWorkspaceHttpIndexBuilder, SingleWorkspaceHttpIndexBuilder>()
+    .AddSingleton(_ => new ToolCallStatisticsService(statisticsFilePath))
     .AddSingleton<GraphBuildPipeline>()
     .AddSingleton<IGraphProvider, DotnetProvider>()
     .AddSingleton<IGraphProvider, ControllerEndpointProvider>()
@@ -64,8 +67,17 @@ builder.Services
     .WithStdioServerTransport()
     .WithTools<CSharpDllGraphTools>();
 
-var host = builder.Build();
-await host.RunAsync();
+using var host = builder.Build();
+var statistics = host.Services.GetRequiredService<ToolCallStatisticsService>();
+
+try
+{
+    await host.RunAsync();
+}
+finally
+{
+    await statistics.DisposeAsync();
+}
 
 static string? TryGetArg(string[] args, string option)
 {

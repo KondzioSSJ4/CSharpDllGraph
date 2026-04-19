@@ -1,14 +1,21 @@
 using System.ComponentModel;
 using CSharpDllGraph.Engine.Query;
+using CSharpDllGraph.Engine.Statistics;
 using ModelContextProtocol.Server;
 
 namespace CSharpDllGraph.Mcp.Tools;
 
 [McpServerToolType]
-internal sealed class CSharpDllGraphTools(IGraphQueryService graphQueryService)
+internal sealed class CSharpDllGraphTools(
+    IGraphQueryService graphQueryService,
+    ToolCallStatisticsService statistics)
 {
     [McpServerTool(Name = "ping"), Description("Returns pong to verify the server is running.")]
-    public static string Ping() => "pong";
+    public string Ping()
+    {
+        statistics.RecordCall("ping");
+        return "pong";
+    }
 
     /// <summary>
     /// Returns the public surface of a NuGet package version.
@@ -27,6 +34,8 @@ internal sealed class CSharpDllGraphTools(IGraphQueryService graphQueryService)
         [Description("Optional regex filter applied to type and method names.")] string? filter = null,
         CancellationToken cancellationToken = default)
     {
+        statistics.RecordCall("describe_package_api");
+
         return graphQueryService.DescribePackageApiAsync(
             new DescribePackageApiRequest(package, version, tfm, filter),
             cancellationToken);
@@ -43,6 +52,8 @@ internal sealed class CSharpDllGraphTools(IGraphQueryService graphQueryService)
         [Description("Optional project name or relative project path filter.")] string? project = null,
         CancellationToken cancellationToken = default)
     {
+        statistics.RecordCall("list_dependencies");
+
         return graphQueryService.ListDependenciesAsync(
             new ListDependenciesRequest(string.Empty, project),
             cancellationToken);
@@ -57,6 +68,8 @@ internal sealed class CSharpDllGraphTools(IGraphQueryService graphQueryService)
     public Task<FindVersionConflictsResult> FindVersionConflicts(
         CancellationToken cancellationToken = default)
     {
+        statistics.RecordCall("find_version_conflicts");
+
         return graphQueryService.FindVersionConflictsAsync(
             new FindVersionConflictsRequest(string.Empty),
             cancellationToken);
@@ -79,6 +92,8 @@ internal sealed class CSharpDllGraphTools(IGraphQueryService graphQueryService)
         [Description("Optional version token when resolving by structured name.")] string? version = null,
         CancellationToken cancellationToken = default)
     {
+        statistics.RecordCall("find_usages");
+
         return graphQueryService.FindUsagesAsync(
             new FindUsagesRequest(symbolId, kind, fullName, version, null),
             cancellationToken);
@@ -103,6 +118,8 @@ internal sealed class CSharpDllGraphTools(IGraphQueryService graphQueryService)
         [Description("Maximum number of ranked suggestions to return.")] int maxResults = 5,
         CancellationToken cancellationToken = default)
     {
+        statistics.RecordCall("suggest_usage");
+
         return graphQueryService.SuggestUsageAsync(
             new SuggestUsageRequest(symbolId, kind, fullName, version, null, maxResults),
             cancellationToken);
@@ -121,6 +138,8 @@ internal sealed class CSharpDllGraphTools(IGraphQueryService graphQueryService)
         [Description("Route or URL template to normalize and match.")] string path,
         CancellationToken cancellationToken = default)
     {
+        statistics.RecordCall("trace_http_call");
+
         return graphQueryService.TraceHttpCallAsync(
             new TraceHttpCallRequest(method, path, null),
             cancellationToken);

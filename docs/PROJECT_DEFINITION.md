@@ -1,115 +1,112 @@
-# CSharpDllGraph — Definicja produktu
+# CSharpDllGraph — Product Definition
 
-> Źródło faz i kolejności realizacji: [`plans/README.md`](../plans/README.md)
+## What is CSharpDllGraph
 
----
+CSharpDllGraph is an MCP (Model Context Protocol) server and CLI toolset for static graph analysis of .NET ecosystems.
 
-## Cel produktu
+It builds a dependency graph from a `.sln` or `.slnx` file and exposes precise query tools for language models working in code-generation mode and for developers navigating large codebases without opening an IDE.
 
-CSharpDllGraph to serwer MCP (Model Context Protocol) i zestaw narzędzi CLI do statycznej analizy grafowej ekosystemu .NET.
-Narzędzie buduje graf zależności na podstawie pliku `.sln` lub `.slnx`, a następnie udostępnia zestaw precyzyjnych
-narzędzi zapytaniowych, z których korzystają modele językowe działające w trybie generowania kodu
-oraz deweloperzy pracujący bezpośrednio z CLI.
-
-Jeden proces MCP obsługuje dokładnie jeden projekt roboczy.
-Konfiguracja projektu pochodzi z parametru `--workspace-path` lub pliku `.csharpdllgraph.json`.
-Serwer MCP przy starcie automatycznie buduje graf, jeśli brakuje `manifest.json`, a potem utrzymuje go aktualnym przez osadzony file watcher.
-
-Żadne z narzędzi nie używa modelu językowego ani osadzeń wektorowych — cała logika opiera się
-na statycznej analizie kodu źródłowego i metadanych pakietów NuGet.
+No tool uses a language model or vector embeddings — all logic is based on static analysis of source code and NuGet package metadata.
 
 ---
 
-## Użytkownicy
+## Who is it for
 
-| Użytkownik | Tryb użycia | Główna potrzeba |
+| User | Usage mode | Primary need |
 |---|---|---|
-| Model językowy (AI w trybie code-gen) | Klient MCP (stdio), jeden serwer per projekt | Precyzyjne kontekst-minimalne odpowiedzi bez halucynacji |
-| Deweloper | CLI / klient MCP | Szybka nawigacja po dużej bazie kodu bez otwierania IDE |
+| Language model (AI in code-gen mode) | MCP client (stdio), one server per project | Precise, context-minimal responses without hallucinations |
+| Developer | CLI / MCP client | Fast navigation of large codebases without opening an IDE |
 
 ---
 
-## Narzędzia MCP — v1 (faza 6)
+## Runtime model
 
-Wszystkie narzędzia są tylko do odczytu; żadne nie modyfikuje kodu użytkownika.
-Realizowane w fazie 6 po ukończeniu analizy strukturalnej (fazy 1–5).
+One MCP process serves exactly one workspace. Configuration comes from the `--workspace-path` argument or a `.csharpdllgraph.json` file searched upward from the current directory.
 
-| # | Narzędzie | Opis |
+`.csharpdllgraph.json` fields:
+
+- `workspacePath` (required)
+- `graphPath` (optional — defaults to `<workspacePath>/.csharpdllgraph/graph`)
+- `solutionPath` (optional)
+
+`--workspace-path` takes priority over the config file. If neither source is available, the server exits with an error.
+
+On startup the server auto-builds the graph if `manifest.json` is missing, then keeps it fresh via an embedded file watcher with incremental rebuild (edit → rebuild → query latency under 2 s).
+
+---
+
+## CLI
+
+- `build <path-to-sln>` — full graph build, output written to `.csharpdllgraph/`
+- `update` — incremental update based on changed files
+- `watch` — continuous mode: detects `.cs` and `.csproj` changes and rebuilds automatically
+
+After every `build` or `update`, a `graph.html` file is written to `.csharpdllgraph/graph.html`.
+
+---
+
+## MCP tools
+
+All tools are read-only and do not modify user code. The workspace is configured at server startup — tool signatures require no workspace-selection parameter.
+
+| # | Tool | Description |
 |---|---|---|
-| 1 | `describe_package_api` | Publiczna powierzchnia pakietu NuGet w danej wersji |
-| 2 | `find_usages` | Miejsca, w których symbol X jest używany w kodzie użytkownika |
-| 3 | `trace_http_call` | Wywołania trafiające do endpointu X w skonfigurowanym projekcie |
-| 4 | `list_dependencies` | Rozwiązane wersje pakietów per projekt |
-| 5 | `find_version_conflicts` | Ten sam pakiet w różnych wersjach w ramach solucji |
-| 6 | `suggest_usage` | Kanoniczne miejsca użycia symbolu wyekstrahowane z istniejącego kodu |
+| 1 | `describe_package_api` | Public surface of a NuGet package at a given version |
+| 2 | `find_usages` | Places where symbol X is used in user code |
+| 3 | `trace_http_call` | Callers that hit endpoint X (cross-workspace) |
+| 4 | `list_dependencies` | Resolved package versions per project |
+| 5 | `find_version_conflicts` | Same package at different versions across the solution |
+| 6 | `suggest_usage` | Canonical call sites of a symbol extracted from existing user code |
 
 ---
 
-## Fazy realizacji
+## Graph model
 
-Szczegółowe pliki faz i bramki VALIDATE-STOP opisano w [`plans/README.md`](../plans/README.md).
+The graph represents the full structure of a .NET solution as a network of nodes and edges.
 
-| Faza | Status | Fokus |
-|---|---|---|
-| 0 | ✓ | Scaffold — solucja, host MCP, szkielet dokumentacji |
-| 1 | ✓ | Schemat grafu + JSON store |
-| 2 | ✓ | Provider .NET — pakiety, assemblies, typy, metody |
-| 3 | ✓ | Krawędzie użycia (Roslyn) |
-| 4 | ✓ | Endpointy HTTP — analiza statyczna |
-| 5 | ✓ | Specyfikacje HTTP (OpenAPI/Swagger, `.http`, Postman) + reconciliation |
-| 6 | ✓ | Implementacja 6 narzędzi MCP |
-| 7 | ~ | CLI (`build`, `update`, `query`, `watch`), konfiguracja per projekt dla MCP, auto-build, osadzony file watcher, inkrementalny rebuild |
+**Nodes:** `Workspace`, `Project`, `Package`, `Assembly`, `Namespace`, `Type`, `Method`, `HttpEndpoint`, `HttpCallSite`, `ExternalRef`
+
+**Edges:** `Contains`, `References`, `DependsOn`, `Implements`, `Inherits`, `Calls`, `Uses`, `HandlesRoute`, `CallsRoute`, `DescribedBy`
+
+Graph data is stored per project in type-sharded JSON files (`manifest.json`, `nodes/*.json`, `edges/*.json`). Node keys are deterministic (`{kind}:{fqn}@{version}`), enabling diff-based comparison between rebuilds.
 
 ---
 
-## Model grafu — faza 1
+## Source analysis
 
-Faza 1 wprowadza wspólny model grafu dla całego produktu.
-Każdy element reprezentowany jest jako węzeł z jednoznacznym identyfikatorem.
-Relacje między elementami reprezentowane są jako krawędzie.
-Model obejmuje strukturę kodu, zależności, elementy HTTP i odwołania zewnętrzne.
-Dane grafu zapisywane są per projekt roboczy w małych plikach JSON podzielonych na typy.
-Zapis jest deterministyczny, aby ułatwić porównywanie zmian między kolejnymi przebudowami.
-Na tym modelu opiera się warstwa zapytań używana później przez narzędzia MCP.
+The tool detects and analyzes:
 
----
-
-## Model uruchomienia MCP
-
-Serwer MCP działa w trybie single-workspace.
-Nie utrzymuje globalnego `WorkspaceRegistry` do wyboru projektu w czasie zapytania.
-Dobór projektu następuje przed startem serwera.
-
-Źródła konfiguracji:
-
-- parametr `--workspace-path`
-- plik `.csharpdllgraph.json` wyszukiwany od bieżącego katalogu w górę
-
-Plik `.csharpdllgraph.json` może wskazać:
-
-- `workspacePath`
-- `graphPath`
-- `solutionPath`
-
-Po uruchomieniu wszystkie narzędzia MCP pracują na wcześniej skonfigurowanym projekcie.
-Sygnatury narzędzi nie wymagają parametru wyboru workspace.
+- NuGet dependencies from `project.assets.json` (types, methods, assemblies) — with per-package cache (`name@version`) to speed up subsequent builds
+- Symbol usage edges between methods (Roslyn)
+- HTTP endpoints: ASP.NET routing attributes (`[HttpGet]`, `[Route]`), Minimal API (`app.MapGet`)
+- HTTP call sites in JS/TS files (`fetch`, `axios`)
+- HTTP specifications: OpenAPI/Swagger (JSON and YAML), `.http` files, Postman collections
+- Mismatches between specifications and source code
 
 ---
 
-## Non-goals dla v1
+## Graph visualization
 
-- **Brak runtime capture** — narzędzie nie przechwytuje ruchu HTTP w czasie działania aplikacji.
-- **Brak LLM w narzędziach** — żadne narzędzie nie wywołuje modelu językowego ani osadzeń.
-- **Brak wieloprojektowego routingu w jednym procesie MCP** — jeden proces obsługuje jeden projekt roboczy.
-- **Brak providerów innych niż .NET** — seam dla przyszłych providerów zarezerwowany w fazie 2,
-  ale żaden inny provider nie jest dostarczany w v1.
+After every build the CLI generates `graph.html` — a self-contained HTML file with a D3.js force-directed graph. No server or network connection required.
+
+UI features:
+- Filter nodes and edges by type
+- Click a node to see its attributes and source locations
+- Search with node highlighting
 
 ---
 
-## Wymagania techniczne (minimalne)
+## Non-goals for v1
 
-- Platforma: .NET 10
-- Biblioteka MCP: `ModelContextProtocol` v1.1.0, transport `WithStdioServerTransport`
-- Format solucji: `.slnx`
-- Struktura katalogów: `src/<Project>/` i `tests/<Project>.Tests/`
-- Wspólny plik `Directory.Build.targets` w korzeniu repozytorium
+- **No runtime capture** — the tool does not intercept live HTTP traffic.
+- **No LLM in tools** — no tool calls a language model or embeddings.
+- **No multi-workspace routing in one MCP process** — one process serves one workspace.
+- **No non-.NET providers** — the provider seam is reserved for future use; no other provider ships in v1.
+
+---
+
+## Technical requirements
+
+- Platform: .NET 10
+- MCP library: `ModelContextProtocol` v1.1.0, transport `WithStdioServerTransport`
+- Solution format: `.slnx`

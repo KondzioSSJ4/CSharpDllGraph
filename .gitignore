@@ -349,8 +349,6 @@ healthchecksdb
 .history/
 
 # Local Appsettings
-src/CNS.Search.API/appsettings.Local.json
-/Global/CNS.Search.API/.config/dotnet-tools.json
 DevOps/Postman/newman/
 
 
@@ -359,10 +357,6 @@ DevOps/Postman/newman/
 
 # Mac
 .DS_Store
-
-#until we add in pipeline, this file should not go to git and every environment has this file
-/Loki/Searcher/local.settings.json
-/Loki/CNS.Loki.Parser/local.settings.json
 
 # Local testing, docs, and scratch files
 local/

@@ -5,7 +5,9 @@ using CSharpDllGraph.Engine.Providers;
 using CSharpDllGraph.Engine.Query;
 using CSharpDllGraph.Engine.Registry;
 using CSharpDllGraph.Engine.Store;
+using CSharpDllGraph.Providers.Dotnet;
 using CSharpDllGraph.Providers.Dotnet.Http;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit.Abstractions;
 
 namespace CSharpDllGraph.Providers.Dotnet.Tests;
@@ -84,7 +86,7 @@ public sealed class IncrementalLatencyMeasurementTests(ITestOutputHelper output)
     {
         var pipeline = new GraphBuildPipeline(
         [
-            new DotnetProvider(),
+            new DotnetProvider(NullLogger<DotnetProvider>.Instance),
             new ControllerEndpointProvider(),
             new MinimalApiEndpointProvider(),
             new HttpClientCallSiteProvider(),
@@ -92,7 +94,7 @@ public sealed class IncrementalLatencyMeasurementTests(ITestOutputHelper output)
             new JsFetchCallSiteProvider(),
             new OpenApiSpecProvider(),
             new PostmanCallSiteProvider()
-        ]);
+        ], NullLogger<GraphBuildPipeline>.Instance);
 
         var store = new JsonWorkspaceStore(graphPath);
         return await pipeline.BuildAndPersistAsync(

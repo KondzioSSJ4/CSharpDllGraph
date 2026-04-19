@@ -2,6 +2,7 @@ using CSharpDllGraph.Engine.Graph;
 using CSharpDllGraph.Engine.Providers;
 using CSharpDllGraph.Engine.Store;
 using CSharpDllGraph.Providers.Dotnet.Http;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Text.Json;
 
 namespace CSharpDllGraph.Providers.Dotnet.Tests;
@@ -133,7 +134,7 @@ public sealed class IncrementalUpdateTests
             new MinimalApiEndpointProvider(),
             new HttpClientCallSiteProvider(),
             new OpenApiSpecProvider(),
-        ]);
+        ], NullLogger<GraphBuildPipeline>.Instance);
 
         var store = new JsonWorkspaceStore(graphPath);
         var snapshot = await pipeline.BuildAndPersistAsync(

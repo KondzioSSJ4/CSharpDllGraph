@@ -7,6 +7,7 @@ using CSharpDllGraph.Engine.Http;
 using CSharpDllGraph.Engine.Providers;
 using CSharpDllGraph.Engine.Query;
 using CSharpDllGraph.Engine.Registry;
+using CSharpDllGraph.Engine.Statistics;
 using CSharpDllGraph.Engine.Store;
 using CSharpDllGraph.Providers.Dotnet;
 using CSharpDllGraph.Providers.Dotnet.Http;
@@ -326,6 +327,13 @@ internal static class CliApplication
 
         var parser = ArgumentParser.Parse(args.Skip(1).ToArray());
         var queryService = new GraphQueryService(registry, new CrossWorkspaceHttpIndexBuilder(registry));
+        var workspaceRootPath = ResolveQueryWorkspaceRootPath(parser, registry);
+        var statisticsFilePath = workspaceRootPath is null
+            ? null
+            : Path.Combine(workspaceRootPath, ".csharpdllgraph", "statistics.json");
+
+        await using var statistics = statisticsFilePath is null ? null : new ToolCallStatisticsService(statisticsFilePath);
+        statistics?.RecordCall(args[0]);
 
         object result = args[0] switch
         {
@@ -373,6 +381,24 @@ internal static class CliApplication
 
         WriteJson(result);
         return 0;
+    }
+
+    private static string? ResolveQueryWorkspaceRootPath(ArgumentParser parser, WorkspaceRegistry registry)
+    {
+        var explicitWorkspacePath = parser.GetSingleOption("--workspace-path");
+        if (!string.IsNullOrWhiteSpace(explicitWorkspacePath))
+        {
+            return Path.GetFullPath(explicitWorkspacePath);
+        }
+
+        var workspaceName = parser.GetSingleOption("--workspace");
+        if (!string.IsNullOrWhiteSpace(workspaceName) && registry.TryResolve(workspaceName, out var registration))
+        {
+            return registration.RootPath;
+        }
+
+        var list = registry.List();
+        return list.Count > 0 ? list[0].RootPath : null;
     }
 
     private static WorkspaceRegistration? FindByRootPath(WorkspaceRegistry registry, string rootPath)
