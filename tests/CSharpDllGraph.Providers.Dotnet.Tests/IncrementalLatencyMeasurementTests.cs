@@ -31,15 +31,13 @@ public sealed class IncrementalLatencyMeasurementTests(ITestOutputHelper output)
 
                 var solutionPath = Path.Combine(workspaceRoot, "SampleApi.slnx");
                 var graphPath = Path.Combine(workspaceRoot, ".csharpdllgraph", "graph");
-                var registryPath = Path.Combine(workspaceRoot, ".csharpdllgraph", "registry", "workspaces.json");
                 var programPath = Path.Combine(workspaceRoot, "Program.cs");
                 var workspaceName = "sample-api";
 
-                var registry = new WorkspaceRegistry(registryPath);
-                var queryService = new GraphQueryService(registry, new CrossWorkspaceHttpIndexBuilder(registry));
+                IReadOnlyList<WorkspaceRegistration> registrations = [new WorkspaceRegistration(workspaceName, workspaceRoot, graphPath)];
+                var queryService = new GraphQueryService(registrations, new CrossWorkspaceHttpIndexBuilder(registrations));
 
-                var initialSnapshot = await BuildWorkspaceAsync(solutionPath, workspaceRoot, graphPath, isUpdate: false);
-                await RegisterWorkspaceAsync(registry, workspaceName, workspaceRoot, graphPath, initialSnapshot.Manifest.LastBuildUtc);
+                await BuildWorkspaceAsync(solutionPath, workspaceRoot, graphPath, isUpdate: false);
 
                 var baseline = await queryService.TraceHttpCallAsync(new TraceHttpCallRequest("POST", "/api/ping", [workspaceName]));
                 Assert.Contains(
@@ -56,8 +54,7 @@ public sealed class IncrementalLatencyMeasurementTests(ITestOutputHelper output)
                 var stopwatch = Stopwatch.StartNew();
                 await File.WriteAllTextAsync(programPath, updatedProgram);
 
-                var updatedSnapshot = await BuildWorkspaceAsync(solutionPath, workspaceRoot, graphPath, isUpdate: true);
-                await RegisterWorkspaceAsync(registry, workspaceName, workspaceRoot, graphPath, updatedSnapshot.Manifest.LastBuildUtc);
+                await BuildWorkspaceAsync(solutionPath, workspaceRoot, graphPath, isUpdate: true);
 
                 var updated = await queryService.TraceHttpCallAsync(new TraceHttpCallRequest("POST", "/api/ping", [workspaceName]));
                 stopwatch.Stop();
@@ -78,7 +75,7 @@ public sealed class IncrementalLatencyMeasurementTests(ITestOutputHelper output)
         output.WriteLine($"Median edit-to-query latency: {median} ms");
     }
 
-    private static async Task<WorkspaceSnapshot> BuildWorkspaceAsync(
+    private static async Task BuildWorkspaceAsync(
         string solutionPath,
         string workspaceRoot,
         string graphPath,
@@ -97,7 +94,7 @@ public sealed class IncrementalLatencyMeasurementTests(ITestOutputHelper output)
         ], NullLogger<GraphBuildPipeline>.Instance);
 
         var store = new JsonWorkspaceStore(graphPath);
-        return await pipeline.BuildAndPersistAsync(
+        await pipeline.BuildAndPersistAsync(
             GraphBuildContext.Create(solutionPath, workspaceRoot, isUpdate),
             store);
     }
@@ -127,16 +124,6 @@ public sealed class IncrementalLatencyMeasurementTests(ITestOutputHelper output)
             throw new InvalidOperationException(
                 $"dotnet restore failed with exit code {process.ExitCode}.{Environment.NewLine}{standardOutput}{Environment.NewLine}{standardError}");
         }
-    }
-
-    private static Task RegisterWorkspaceAsync(
-        WorkspaceRegistry registry,
-        string workspaceName,
-        string workspaceRoot,
-        string graphPath,
-        DateTimeOffset lastBuildUtc)
-    {
-        return registry.AddAsync(new WorkspaceRegistration(workspaceName, workspaceRoot, graphPath, lastBuildUtc));
     }
 
     private static string GetSampleApiFixtureRoot()

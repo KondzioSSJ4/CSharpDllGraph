@@ -1,6 +1,5 @@
 using System.Text.Json;
 using CSharpDllGraph.Engine.Graph;
-using CSharpDllGraph.Engine.Registry;
 using CSharpDllGraph.Engine.Store;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
@@ -109,35 +108,6 @@ public sealed class McpToolEndToEndTests
         Assert.Equal("/api/users", traceHttpCall.GetProperty("path").GetString());
     }
 
-    [Fact]
-    public async Task TraceHttpCall_ResolvesAcrossTwoRegisteredWorkspaces()
-    {
-        await using var fixture = await McpProtocolFixture.CreateAsync();
-        var result = await fixture.CallToolAsync(
-            "trace_http_call",
-            new Dictionary<string, object?>
-            {
-                ["method"] = "GET",
-                ["path"] = "/api/users"
-            });
-
-        var producers = result.GetProperty("producers");
-        var consumers = result.GetProperty("consumers");
-
-        Assert.Equal(1, producers.GetArrayLength());
-        Assert.Equal(1, consumers.GetArrayLength());
-
-        Assert.Equal("sample-api", producers[0].GetProperty("workspace").GetString());
-        Assert.Equal("GET", producers[0].GetProperty("method").GetString());
-        Assert.Equal("/api/users", producers[0].GetProperty("path").GetString());
-        Assert.Equal("src/SampleApi/Controllers/UsersController.cs", producers[0].GetProperty("sourceFile").GetString());
-
-        Assert.Equal("sample-ui", consumers[0].GetProperty("workspace").GetString());
-        Assert.Equal("GET", consumers[0].GetProperty("method").GetString());
-        Assert.Equal("/api/users", consumers[0].GetProperty("path").GetString());
-        Assert.Equal("src/sample-api-client.ts", consumers[0].GetProperty("sourceFile").GetString());
-    }
-
     private static JsonElement LoadSchemaFixture()
     {
         using var document = JsonDocument.Parse(File.ReadAllText(
@@ -188,21 +158,15 @@ public sealed class McpToolEndToEndTests
     private sealed class McpProtocolFixture : IAsyncDisposable
     {
         private readonly string _rootDirectory;
-        private readonly string _registryFilePath;
-        private readonly string? _originalRegistryContent;
         private readonly StdioClientTransport _transport;
         private readonly McpClient _client;
 
         private McpProtocolFixture(
             string rootDirectory,
-            string registryFilePath,
-            string? originalRegistryContent,
             StdioClientTransport transport,
             McpClient client)
         {
             _rootDirectory = rootDirectory;
-            _registryFilePath = registryFilePath;
-            _originalRegistryContent = originalRegistryContent;
             _transport = transport;
             _client = client;
         }
@@ -214,9 +178,12 @@ public sealed class McpToolEndToEndTests
             var rootDirectory = Path.Combine(Path.GetTempPath(), $"csharpdllgraph-mcp-tests-{Guid.NewGuid():N}");
             Directory.CreateDirectory(rootDirectory);
 
+            var workspaceRoot = Path.Combine(rootDirectory, "workspaces", "sample-solution");
+            var graphRoot = Path.Combine(workspaceRoot, ".csharpdllgraph", "graph");
+
             await CreateWorkspaceAsync(
-                rootDirectory,
-                "sample-solution",
+                workspaceRoot,
+                graphRoot,
                 BuildSampleSolutionSnapshot(),
                 new Dictionary<string, string>(StringComparer.Ordinal)
                 {
@@ -226,57 +193,6 @@ public sealed class McpToolEndToEndTests
                 {
                     ["src/AppV2/Usage.cs"] = new(2026, 4, 18, 9, 0, 0, TimeSpan.Zero)
                 });
-
-            await CreateWorkspaceAsync(
-                rootDirectory,
-                "sample-api",
-                BuildSampleApiSnapshot(),
-                new Dictionary<string, string>(StringComparer.Ordinal)
-                {
-                    ["src/SampleApi/Controllers/UsersController.cs"] = SampleApiControllerSource
-                },
-                new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal)
-                {
-                    ["src/SampleApi/Controllers/UsersController.cs"] = new(2026, 4, 18, 8, 0, 0, TimeSpan.Zero)
-                });
-
-            await CreateWorkspaceAsync(
-                rootDirectory,
-                "sample-ui",
-                BuildSampleUiSnapshot(),
-                new Dictionary<string, string>(StringComparer.Ordinal)
-                {
-                    ["src/sample-api-client.ts"] = SampleUiSource
-                },
-                new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal)
-                {
-                    ["src/sample-api-client.ts"] = new(2026, 4, 18, 7, 0, 0, TimeSpan.Zero)
-                });
-
-            var registryFilePath = new WorkspaceRegistry().RegistryFilePath;
-            var registryDirectory = Path.GetDirectoryName(registryFilePath);
-            if (!string.IsNullOrWhiteSpace(registryDirectory))
-            {
-                Directory.CreateDirectory(registryDirectory);
-            }
-
-            var originalRegistryContent = File.Exists(registryFilePath)
-                ? await File.ReadAllTextAsync(registryFilePath)
-                : null;
-
-            File.Delete(registryFilePath);
-            File.Delete(registryFilePath + ".lock");
-
-            var registry = new WorkspaceRegistry(registryFilePath);
-
-            foreach (var workspaceName in new[] { "sample-solution", "sample-api", "sample-ui" })
-            {
-                await registry.AddAsync(new WorkspaceRegistration(
-                    workspaceName,
-                    Path.Combine(rootDirectory, "workspaces", workspaceName, "root"),
-                    Path.Combine(rootDirectory, "workspaces", workspaceName, "graph"),
-                    new DateTimeOffset(2026, 4, 18, 12, 0, 0, TimeSpan.Zero)));
-            }
 
             var serverProjectPath = Path.Combine(GetRepositoryRoot(), "src", "CSharpDllGraph.Mcp", "CSharpDllGraph.Mcp.csproj");
             var transport = new StdioClientTransport(new StdioClientTransportOptions
@@ -288,7 +204,10 @@ public sealed class McpToolEndToEndTests
                     "run",
                     "--project",
                     serverProjectPath,
-                    "--no-build"
+                    "--no-build",
+                    "--",
+                    "--workspace-path",
+                    workspaceRoot
                 ],
                 WorkingDirectory = GetRepositoryRoot(),
                 ShutdownTimeout = TimeSpan.FromSeconds(5),
@@ -299,7 +218,7 @@ public sealed class McpToolEndToEndTests
             });
 
             var client = await McpClient.CreateAsync(transport);
-            return new McpProtocolFixture(rootDirectory, registryFilePath, originalRegistryContent, transport, client);
+            return new McpProtocolFixture(rootDirectory, transport, client);
         }
 
         public async Task<JsonElement> CallToolAsync(string toolName, IReadOnlyDictionary<string, object?> arguments)
@@ -332,15 +251,6 @@ public sealed class McpToolEndToEndTests
 
             try
             {
-                if (_originalRegistryContent is null)
-                {
-                    File.Delete(_registryFilePath);
-                }
-                else
-                {
-                    await File.WriteAllTextAsync(_registryFilePath, _originalRegistryContent);
-                }
-
                 Directory.Delete(_rootDirectory, recursive: true);
             }
             catch (IOException)
@@ -352,14 +262,12 @@ public sealed class McpToolEndToEndTests
         }
 
         private static async Task CreateWorkspaceAsync(
-            string rootDirectory,
-            string workspaceName,
+            string workspaceRoot,
+            string graphRoot,
             WorkspaceSnapshot snapshot,
             IReadOnlyDictionary<string, string> sourceFiles,
             IReadOnlyDictionary<string, DateTimeOffset> timestamps)
         {
-            var workspaceRoot = Path.Combine(rootDirectory, "workspaces", workspaceName, "root");
-            var graphRoot = Path.Combine(rootDirectory, "workspaces", workspaceName, "graph");
             Directory.CreateDirectory(workspaceRoot);
 
             foreach (var sourceFile in sourceFiles)
@@ -484,20 +392,30 @@ public sealed class McpToolEndToEndTests
                     new SourceRef("src/AppV2/Usage.cs", [new SourceSpan(4, 5, 8, 6)])
                 ]);
 
+            var handlerMethod = Node.Create(
+                new NodeId(NodeKind.Method, "SampleApi.Controllers.UsersController.GetAll()", "project-SampleApi/SampleApi"),
+                NodeKind.Method,
+                "SampleApi.Controllers.UsersController.GetAll()@project-SampleApi/SampleApi");
+
+            var endpoint = Node.Create(
+                new NodeId(NodeKind.HttpEndpoint, "GET:/api/users", "project-SampleApi/SampleApi"),
+                NodeKind.HttpEndpoint,
+                "GET /api/users",
+                new Dictionary<string, JsonElement>(StringComparer.Ordinal)
+                {
+                    ["httpMethod"] = Json("\"GET\""),
+                    ["routeTemplate"] = Json("\"/api/users\"")
+                },
+                [
+                    new SourceRef("src/SampleApi/Controllers/UsersController.cs", [new SourceSpan(6, 5, 6, 40)])
+                ]);
+
             var nodes = new Node[]
             {
-                projectV1,
-                projectV2,
-                packageV1,
-                packageV2,
-                assemblyV2,
-                namespaceV2,
-                interfaceType,
-                modernType,
-                interfaceMethod,
-                modernGetMethod,
-                modernNormalizedMethod,
-                usageMethod
+                projectV1, projectV2, packageV1, packageV2,
+                assemblyV2, namespaceV2, interfaceType, modernType,
+                interfaceMethod, modernGetMethod, modernNormalizedMethod,
+                usageMethod, handlerMethod, endpoint
             };
 
             var edges = new Edge[]
@@ -524,72 +442,11 @@ public sealed class McpToolEndToEndTests
                     ["callCount"] = Json("1")
                 }, [
                     new SourceRef("src/AppV2/Usage.cs", [new SourceSpan(7, 16, 7, 33)])
-                ])
+                ]),
+                Edge.Create(handlerMethod.Id, endpoint.Id, EdgeKind.HandlesRoute)
             };
 
             return new WorkspaceSnapshot(manifest, nodes, edges);
-        }
-
-        private static WorkspaceSnapshot BuildSampleApiSnapshot()
-        {
-            var manifest = WorkspaceManifest.CreateDefault(schemaVersion: "phase-06", engineVersion: "phase-06");
-
-            var handlerMethod = Node.Create(
-                new NodeId(NodeKind.Method, "SampleApi.Controllers.UsersController.GetAll()", "project-SampleApi/SampleApi"),
-                NodeKind.Method,
-                "SampleApi.Controllers.UsersController.GetAll()@project-SampleApi/SampleApi");
-
-            var endpoint = Node.Create(
-                new NodeId(NodeKind.HttpEndpoint, "GET:/api/users", "project-SampleApi/SampleApi"),
-                NodeKind.HttpEndpoint,
-                "GET /api/users",
-                new Dictionary<string, JsonElement>(StringComparer.Ordinal)
-                {
-                    ["httpMethod"] = Json("\"GET\""),
-                    ["routeTemplate"] = Json("\"/api/users\"")
-                },
-                [
-                    new SourceRef("src/SampleApi/Controllers/UsersController.cs", [new SourceSpan(6, 5, 6, 40)])
-                ]);
-
-            return new WorkspaceSnapshot(
-                manifest,
-                [handlerMethod, endpoint],
-                [
-                    Edge.Create(handlerMethod.Id, endpoint.Id, EdgeKind.HandlesRoute)
-                ]);
-        }
-
-        private static WorkspaceSnapshot BuildSampleUiSnapshot()
-        {
-            var manifest = WorkspaceManifest.CreateDefault(schemaVersion: "phase-06", engineVersion: "phase-06");
-
-            var caller = Node.Create(
-                new NodeId(NodeKind.Method, "SampleUi.ApiClient.LoadUsers()", "project-SampleUi/SampleUi"),
-                NodeKind.Method,
-                "SampleUi.ApiClient.LoadUsers()@project-SampleUi/SampleUi");
-
-            var callSite = Node.Create(
-                new NodeId(NodeKind.HttpCallSite, "GET:/api/users", "project-SampleUi/SampleUi"),
-                NodeKind.HttpCallSite,
-                "GET /api/users",
-                new Dictionary<string, JsonElement>(StringComparer.Ordinal)
-                {
-                    ["httpMethod"] = Json("\"GET\""),
-                    ["routeTemplate"] = Json("\"/api/users\""),
-                    ["urlTemplate"] = Json("\"/api/users\""),
-                    ["callingMethod"] = Json("\"SampleUi.ApiClient.LoadUsers()\"")
-                },
-                [
-                    new SourceRef("src/sample-api-client.ts", [new SourceSpan(2, 1, 2, 20)])
-                ]);
-
-            return new WorkspaceSnapshot(
-                manifest,
-                [caller, callSite],
-                [
-                    Edge.Create(caller.Id, callSite.Id, EdgeKind.CallsRoute)
-                ]);
         }
 
         private const string SampleSolutionUsageSource =
@@ -603,26 +460,6 @@ public sealed class McpToolEndToEndTests
                     var service = new Sample.WidgetKit.ModernWidgetService();
                     return service.Get(value);
                 }
-            }
-            """;
-
-        private const string SampleApiControllerSource =
-            """
-            namespace SampleApi.Controllers;
-
-            public sealed class UsersController
-            {
-                public string GetAll()
-                {
-                    return "ok";
-                }
-            }
-            """;
-
-        private const string SampleUiSource =
-            """
-            export async function loadUsers() {
-              return fetch('/api/users');
             }
             """;
 

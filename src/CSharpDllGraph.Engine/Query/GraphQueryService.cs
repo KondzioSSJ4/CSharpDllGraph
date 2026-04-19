@@ -8,7 +8,7 @@ using CSharpDllGraph.Engine.Store;
 namespace CSharpDllGraph.Engine.Query;
 
 public sealed class GraphQueryService(
-    IWorkspaceRegistry workspaceRegistry,
+    IReadOnlyList<WorkspaceRegistration> registrations,
     ICrossWorkspaceHttpIndexBuilder crossWorkspaceHttpIndexBuilder) : IGraphQueryService
 {
     public async Task<DescribePackageApiResult> DescribePackageApiAsync(
@@ -34,7 +34,7 @@ public sealed class GraphQueryService(
         var namespaces = new SortedDictionary<string, NamespaceAccumulator>(StringComparer.Ordinal);
         var matchingWorkspaces = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var registration in workspaceRegistry.List()
+        foreach (var registration in registrations
                      .OrderBy(static item => item.Name, StringComparer.OrdinalIgnoreCase)
                      .ThenBy(static item => item.Name, StringComparer.Ordinal))
         {
@@ -76,7 +76,7 @@ public sealed class GraphQueryService(
 
         var workspace = request.Workspace;
         var project = request.Project;
-        var registration = workspaceRegistry.Resolve(workspace);
+        var registration = ResolveWorkspace(workspace);
         var normalizedProject = NormalizeOptional(project);
         var query = await LoadWorkspaceQueryAsync(registration, cancellationToken);
 
@@ -100,7 +100,7 @@ public sealed class GraphQueryService(
         ArgumentNullException.ThrowIfNull(request);
 
         var workspace = request.Workspace;
-        var registration = workspaceRegistry.Resolve(workspace);
+        var registration = ResolveWorkspace(workspace);
         var query = await LoadWorkspaceQueryAsync(registration, cancellationToken);
 
         var dependencyEntries = query.FindNodes(NodeKind.Project)
@@ -500,19 +500,30 @@ public sealed class GraphQueryService(
         }
     }
 
-    private IReadOnlyList<WorkspaceRegistration> ResolveWorkspaceScope(IReadOnlyList<string>? workspaces)
+    private WorkspaceRegistration ResolveWorkspace(string name)
     {
-        if (workspaces is null || workspaces.Count == 0 || workspaces.Any(static item => string.Equals(item, "all", StringComparison.OrdinalIgnoreCase)))
+        var registration = registrations.FirstOrDefault(w => string.Equals(w.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (registration is null)
         {
-            return workspaceRegistry.List()
+            throw new KeyNotFoundException($"Workspace '{name}' not found.");
+        }
+
+        return registration;
+    }
+
+    private IReadOnlyList<WorkspaceRegistration> ResolveWorkspaceScope(IReadOnlyList<string>? workspaceNames)
+    {
+        if (workspaceNames is null || workspaceNames.Count == 0 || workspaceNames.Any(static item => string.Equals(item, "all", StringComparison.OrdinalIgnoreCase)))
+        {
+            return registrations
                 .OrderBy(static item => item.Name, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(static item => item.Name, StringComparer.Ordinal)
                 .ToArray();
         }
 
-        return workspaces
+        return workspaceNames
             .Where(static item => !string.IsNullOrWhiteSpace(item))
-            .Select(name => workspaceRegistry.Resolve(name))
+            .Select(ResolveWorkspace)
             .DistinctBy(static item => item.Name, StringComparer.OrdinalIgnoreCase)
             .OrderBy(static item => item.Name, StringComparer.OrdinalIgnoreCase)
             .ThenBy(static item => item.Name, StringComparer.Ordinal)

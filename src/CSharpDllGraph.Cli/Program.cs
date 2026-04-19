@@ -1,7 +1,5 @@
 using System.Text.Json;
 using CSharpDllGraph.Engine.Export;
-using Microsoft.Extensions.Logging;
-using CSharpDllGraph.Engine.Watch;
 using CSharpDllGraph.Engine.Graph;
 using CSharpDllGraph.Engine.Http;
 using CSharpDllGraph.Engine.Providers;
@@ -9,6 +7,7 @@ using CSharpDllGraph.Engine.Query;
 using CSharpDllGraph.Engine.Registry;
 using CSharpDllGraph.Engine.Statistics;
 using CSharpDllGraph.Engine.Store;
+using CSharpDllGraph.Engine.Watch;
 using CSharpDllGraph.Providers.Dotnet;
 using CSharpDllGraph.Providers.Dotnet.Http;
 
@@ -32,14 +31,12 @@ internal static class CliApplication
                 throw new CliException(GetUsage());
             }
 
-            var registry = new WorkspaceRegistry();
             return args[0] switch
             {
-                "build" => await RunBuildAsync(args[1..], registry, isUpdate: false, cancellationToken),
-                "update" => await RunBuildAsync(args[1..], registry, isUpdate: true, cancellationToken),
-                "watch" => await RunWatchAsync(args[1..], registry, cancellationToken),
-                "query" => await RunQueryAsync(args[1..], registry, cancellationToken),
-                "workspace" => await RunWorkspaceAsync(args[1..], registry, cancellationToken),
+                "build" => await RunBuildAsync(args[1..], isUpdate: false, cancellationToken),
+                "update" => await RunBuildAsync(args[1..], isUpdate: true, cancellationToken),
+                "watch" => await RunWatchAsync(args[1..], cancellationToken),
+                "query" => await RunQueryAsync(args[1..], cancellationToken),
                 "help" or "--help" or "-h" => throw new CliException(GetUsage()),
                 _ => throw new CliException($"Unknown command '{args[0]}'.{Environment.NewLine}{GetUsage()}")
             };
@@ -58,37 +55,21 @@ internal static class CliApplication
 
     private static async Task<int> RunBuildAsync(
         IReadOnlyList<string> args,
-        WorkspaceRegistry registry,
         bool isUpdate,
         CancellationToken cancellationToken)
     {
         var parser = ArgumentParser.Parse(args);
         var workspaceRoot = RequireValue(parser.Positionals, 0, "workspace-root");
         var resolvedWorkspaceRoot = Path.GetFullPath(workspaceRoot);
-        var existingRegistration = FindByRootPath(registry, resolvedWorkspaceRoot);
-        var workspaceName = parser.GetSingleOption("--name")
-                            ?? existingRegistration?.Name
-                            ?? Path.GetFileName(resolvedWorkspaceRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        var graphPath = ResolveGraphPath(
-            parser.GetSingleOption("--graph-path"),
-            resolvedWorkspaceRoot,
-            existingRegistration?.GraphPath);
+        var graphPath = ResolveGraphPath(parser.GetSingleOption("--graph-path"), resolvedWorkspaceRoot);
         var solutionPath = ResolveSolutionPath(parser.GetSingleOption("--solution"), resolvedWorkspaceRoot);
 
         var snapshot = await BuildWorkspaceAsync(solutionPath, resolvedWorkspaceRoot, graphPath, isUpdate, cancellationToken);
-        var registration = await RegisterWorkspaceAsync(
-            registry,
-            workspaceName,
-            resolvedWorkspaceRoot,
-            graphPath,
-            snapshot.Manifest.LastBuildUtc,
-            cancellationToken);
 
         WriteJson(new BuildCommandResult(
             isUpdate ? "update" : "build",
-            registration.Name,
-            registration.RootPath,
-            registration.GraphPath,
+            resolvedWorkspaceRoot,
+            graphPath,
             solutionPath,
             snapshot.Manifest.LastBuildUtc,
             snapshot.Nodes.Count,
@@ -101,20 +82,12 @@ internal static class CliApplication
 
     private static async Task<int> RunWatchAsync(
         IReadOnlyList<string> args,
-        WorkspaceRegistry registry,
         CancellationToken cancellationToken)
     {
         var parser = ArgumentParser.Parse(args);
         var workspaceRoot = RequireValue(parser.Positionals, 0, "workspace-root");
         var resolvedWorkspaceRoot = Path.GetFullPath(workspaceRoot);
-        var existingRegistration = FindByRootPath(registry, resolvedWorkspaceRoot);
-        var workspaceName = parser.GetSingleOption("--name")
-                            ?? existingRegistration?.Name
-                            ?? Path.GetFileName(resolvedWorkspaceRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        var graphPath = ResolveGraphPath(
-            parser.GetSingleOption("--graph-path"),
-            resolvedWorkspaceRoot,
-            existingRegistration?.GraphPath);
+        var graphPath = ResolveGraphPath(parser.GetSingleOption("--graph-path"), resolvedWorkspaceRoot);
         var solutionPath = ResolveSolutionPath(parser.GetSingleOption("--solution"), resolvedWorkspaceRoot);
         var debounceMs = parser.GetIntOption("--debounce-ms", 750);
         if (debounceMs < 100)
@@ -125,20 +98,12 @@ internal static class CliApplication
         using var watchCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         using var cancelHandler = new ConsoleCancelHandler(watchCancellationSource, static message => Console.Error.WriteLine(message));
 
-        LogWatch($"Watching '{workspaceName}'.");
-        LogWatch($"Workspace root: {resolvedWorkspaceRoot}");
+        LogWatch($"Watching '{resolvedWorkspaceRoot}'.");
         LogWatch($"Solution: {solutionPath}");
         LogWatch($"Graph path: {graphPath}");
         LogWatch($"Debounce: {debounceMs}ms");
 
-        await RunWatchUpdateAsync(
-            registry,
-            workspaceName,
-            resolvedWorkspaceRoot,
-            solutionPath,
-            graphPath,
-            batch: null,
-            watchCancellationSource.Token);
+        await RunWatchUpdateAsync(resolvedWorkspaceRoot, solutionPath, graphPath, batch: null, watchCancellationSource.Token);
 
         using var watcher = new WorkspaceWatchSession(
             resolvedWorkspaceRoot,
@@ -161,19 +126,12 @@ internal static class CliApplication
                     break;
                 }
 
-                await RunWatchUpdateAsync(
-                    registry,
-                    workspaceName,
-                    resolvedWorkspaceRoot,
-                    solutionPath,
-                    graphPath,
-                    batch,
-                    watchCancellationSource.Token);
+                await RunWatchUpdateAsync(resolvedWorkspaceRoot, solutionPath, graphPath, batch, watchCancellationSource.Token);
             }
         }
         finally
         {
-            LogWatch($"Watcher stopped for '{workspaceName}'.");
+            LogWatch($"Watcher stopped for '{resolvedWorkspaceRoot}'.");
         }
 
         return 0;
@@ -200,8 +158,6 @@ internal static class CliApplication
     }
 
     private static async Task RunWatchUpdateAsync(
-        WorkspaceRegistry registry,
-        string workspaceName,
         string workspaceRootPath,
         string solutionPath,
         string graphPath,
@@ -221,14 +177,6 @@ internal static class CliApplication
             }
 
             var snapshot = await BuildWorkspaceAsync(solutionPath, workspaceRootPath, graphPath, isUpdate: true, cancellationToken);
-            await RegisterWorkspaceAsync(
-                registry,
-                workspaceName,
-                workspaceRootPath,
-                graphPath,
-                snapshot.Manifest.LastBuildUtc,
-                cancellationToken);
-
             LogWatch($"Update complete. Nodes: {snapshot.Nodes.Count}. Edges: {snapshot.Edges.Count}. Last build: {snapshot.Manifest.LastBuildUtc:O}");
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -256,68 +204,8 @@ internal static class CliApplication
         ];
     }
 
-    private static async Task<int> RunWorkspaceAsync(
-        IReadOnlyList<string> args,
-        WorkspaceRegistry registry,
-        CancellationToken cancellationToken)
-    {
-        if (args.Count == 0)
-        {
-            throw new CliException("Missing workspace subcommand.");
-        }
-
-        return args[0] switch
-        {
-            "add" => await RunWorkspaceAddAsync(args.Skip(1).ToArray(), registry, cancellationToken),
-            "list" => RunWorkspaceList(registry),
-            "remove" => await RunWorkspaceRemoveAsync(args.Skip(1).ToArray(), registry, cancellationToken),
-            _ => throw new CliException($"Unknown workspace subcommand '{args[0]}'.")
-        };
-    }
-
-    private static async Task<int> RunWorkspaceAddAsync(
-        IReadOnlyList<string> args,
-        WorkspaceRegistry registry,
-        CancellationToken cancellationToken)
-    {
-        var parser = ArgumentParser.Parse(args);
-        var workspaceName = RequireValue(parser.Positionals, 0, "workspace-name");
-        var workspaceRoot = Path.GetFullPath(RequireValue(parser.Positionals, 1, "workspace-root"));
-        var graphPath = ResolveGraphPath(parser.GetSingleOption("--graph-path"), workspaceRoot, existingGraphPath: null);
-        var registration = await registry.AddAsync(
-            new WorkspaceRegistration(workspaceName, workspaceRoot, graphPath, null),
-            cancellationToken);
-
-        WriteJson(registration);
-        return 0;
-    }
-
-    private static int RunWorkspaceList(WorkspaceRegistry registry)
-    {
-        WriteJson(new WorkspaceListCommandResult(registry.RegistryFilePath, registry.List()));
-        return 0;
-    }
-
-    private static async Task<int> RunWorkspaceRemoveAsync(
-        IReadOnlyList<string> args,
-        WorkspaceRegistry registry,
-        CancellationToken cancellationToken)
-    {
-        var parser = ArgumentParser.Parse(args);
-        var workspaceName = RequireValue(parser.Positionals, 0, "workspace-name");
-        var removed = await registry.RemoveAsync(workspaceName, cancellationToken);
-        if (!removed)
-        {
-            throw new CliException($"Workspace '{workspaceName}' is not registered.");
-        }
-
-        WriteJson(new WorkspaceRemoveCommandResult(workspaceName, removed));
-        return 0;
-    }
-
     private static async Task<int> RunQueryAsync(
         IReadOnlyList<string> args,
-        WorkspaceRegistry registry,
         CancellationToken cancellationToken)
     {
         if (args.Count == 0)
@@ -326,13 +214,26 @@ internal static class CliApplication
         }
 
         var parser = ArgumentParser.Parse(args.Skip(1).ToArray());
-        var queryService = new GraphQueryService(registry, new CrossWorkspaceHttpIndexBuilder(registry));
-        var workspaceRootPath = ResolveQueryWorkspaceRootPath(parser, registry);
-        var statisticsFilePath = workspaceRootPath is null
-            ? null
-            : Path.Combine(workspaceRootPath, ".csharpdllgraph", "statistics.json");
+        var workspacePath = parser.GetSingleOption("--workspace");
+        WorkspaceRegistration? workspace = null;
+        if (!string.IsNullOrWhiteSpace(workspacePath))
+        {
+            var resolvedPath = Path.GetFullPath(workspacePath);
+            var name = Path.GetFileName(resolvedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            var graphPath = ResolveGraphPath(null, resolvedPath);
+            workspace = new WorkspaceRegistration(name, resolvedPath, graphPath);
+        }
 
-        await using var statistics = statisticsFilePath is null ? null : new ToolCallStatisticsService(statisticsFilePath);
+        IReadOnlyList<WorkspaceRegistration> registrations = workspace is not null
+            ? [workspace]
+            : [];
+        var queryService = new GraphQueryService(registrations, new CrossWorkspaceHttpIndexBuilder(registrations));
+
+        var statisticsFilePath = workspace is not null
+            ? Path.Combine(workspace.RootPath, ".csharpdllgraph", "statistics.json")
+            : null;
+
+        await using var statistics = statisticsFilePath is not null ? new ToolCallStatisticsService(statisticsFilePath) : null;
         statistics?.RecordCall(args[0]);
 
         object result = args[0] switch
@@ -346,12 +247,12 @@ internal static class CliApplication
                 cancellationToken),
             "list_dependencies" => await queryService.ListDependenciesAsync(
                 new ListDependenciesRequest(
-                    parser.RequireOption("--workspace"),
+                    RequireWorkspaceName(workspace),
                     parser.GetSingleOption("--project")),
                 cancellationToken),
             "find_version_conflicts" => await queryService.FindVersionConflictsAsync(
                 new FindVersionConflictsRequest(
-                    parser.RequireOption("--workspace")),
+                    RequireWorkspaceName(workspace)),
                 cancellationToken),
             "find_usages" => await queryService.FindUsagesAsync(
                 new FindUsagesRequest(
@@ -359,7 +260,7 @@ internal static class CliApplication
                     parser.GetSingleOption("--kind"),
                     parser.GetSingleOption("--full-name"),
                     parser.GetSingleOption("--version"),
-                    parser.GetMultiOption("--workspace")),
+                    parser.GetMultiOption("--workspace-filter")),
                 cancellationToken),
             "suggest_usage" => await queryService.SuggestUsageAsync(
                 new SuggestUsageRequest(
@@ -367,14 +268,14 @@ internal static class CliApplication
                     parser.GetSingleOption("--kind"),
                     parser.GetSingleOption("--full-name"),
                     parser.GetSingleOption("--version"),
-                    parser.GetMultiOption("--workspace"),
+                    parser.GetMultiOption("--workspace-filter"),
                     parser.GetIntOption("--max-results", 5)),
                 cancellationToken),
             "trace_http_call" => await queryService.TraceHttpCallAsync(
                 new TraceHttpCallRequest(
                     parser.RequireOption("--method"),
                     parser.RequireOption("--path"),
-                    parser.GetMultiOption("--workspace")),
+                    null),
                 cancellationToken),
             _ => throw new CliException($"Unknown query tool '{args[0]}'.")
         };
@@ -383,53 +284,21 @@ internal static class CliApplication
         return 0;
     }
 
-    private static string? ResolveQueryWorkspaceRootPath(ArgumentParser parser, WorkspaceRegistry registry)
+    private static string RequireWorkspaceName(WorkspaceRegistration? workspace)
     {
-        var explicitWorkspacePath = parser.GetSingleOption("--workspace-path");
-        if (!string.IsNullOrWhiteSpace(explicitWorkspacePath))
+        if (workspace is null)
         {
-            return Path.GetFullPath(explicitWorkspacePath);
+            throw new CliException("Missing required option '--workspace'.");
         }
 
-        var workspaceName = parser.GetSingleOption("--workspace");
-        if (!string.IsNullOrWhiteSpace(workspaceName) && registry.TryResolve(workspaceName, out var registration))
-        {
-            return registration.RootPath;
-        }
-
-        var list = registry.List();
-        return list.Count > 0 ? list[0].RootPath : null;
+        return workspace.Name;
     }
 
-    private static WorkspaceRegistration? FindByRootPath(WorkspaceRegistry registry, string rootPath)
-    {
-        return registry.List()
-            .FirstOrDefault(entry => string.Equals(entry.RootPath, rootPath, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static Task<WorkspaceRegistration> RegisterWorkspaceAsync(
-        WorkspaceRegistry registry,
-        string workspaceName,
-        string workspaceRootPath,
-        string graphPath,
-        DateTimeOffset? lastBuiltUtc,
-        CancellationToken cancellationToken)
-    {
-        return registry.AddAsync(
-            new WorkspaceRegistration(workspaceName, workspaceRootPath, graphPath, lastBuiltUtc),
-            cancellationToken);
-    }
-
-    private static string ResolveGraphPath(string? explicitGraphPath, string workspaceRootPath, string? existingGraphPath)
+    private static string ResolveGraphPath(string? explicitGraphPath, string workspaceRootPath)
     {
         if (!string.IsNullOrWhiteSpace(explicitGraphPath))
         {
             return Path.GetFullPath(explicitGraphPath);
-        }
-
-        if (!string.IsNullOrWhiteSpace(existingGraphPath))
-        {
-            return existingGraphPath;
         }
 
         return Path.GetFullPath(Path.Combine(workspaceRootPath, ".csharpdllgraph", "graph"));
@@ -480,37 +349,29 @@ internal static class CliApplication
     {
         return """
                Usage:
-                 build <workspace-root> [--solution <path>] [--name <workspace-name>] [--graph-path <path>]
-                 update <workspace-root> [--solution <path>] [--name <workspace-name>] [--graph-path <path>]
-                 watch <workspace-root> [--solution <path>] [--name <workspace-name>] [--graph-path <path>] [--debounce-ms <ms>]
-                 query <tool> [options]
-                 workspace add <workspace-name> <workspace-root> [--graph-path <path>]
-                 workspace list
-                 workspace remove <workspace-name>
+                 build <workspace-root> [--solution <path>] [--graph-path <path>]
+                 update <workspace-root> [--solution <path>] [--graph-path <path>]
+                 watch <workspace-root> [--solution <path>] [--graph-path <path>] [--debounce-ms <ms>]
+                 query <tool> [--workspace <path>] [options]
 
                Query tools:
-                 describe_package_api --package <name> --version <version> [--tfm <tfm>] [--filter <regex>]
-                 list_dependencies --workspace <name> [--project <name-or-path>]
-                 find_version_conflicts --workspace <name>
-                 find_usages [--symbol-id <id>] [--kind <kind>] [--full-name <name>] [--version <token>] [--workspace <name>]...
-                 suggest_usage [--symbol-id <id>] [--kind <kind>] [--full-name <name>] [--version <token>] [--workspace <name>]... [--max-results <count>]
-                 trace_http_call --method <http-method> --path <route-or-url> [--workspace <name>]...
+                 describe_package_api --package <name> --version <version> [--tfm <tfm>] [--filter <regex>] [--workspace <path>]
+                 list_dependencies --workspace <path> [--project <name-or-path>]
+                 find_version_conflicts --workspace <path>
+                 find_usages [--symbol-id <id>] [--kind <kind>] [--full-name <name>] [--version <token>] [--workspace <path>]
+                 suggest_usage [--symbol-id <id>] [--kind <kind>] [--full-name <name>] [--version <token>] [--workspace <path>] [--max-results <count>]
+                 trace_http_call --method <http-method> --path <route-or-url> [--workspace <path>]
                """;
     }
 
     private sealed record BuildCommandResult(
         string Command,
-        string Workspace,
         string RootPath,
         string GraphPath,
         string SolutionPath,
         DateTimeOffset LastBuildUtc,
         int NodeCount,
         int EdgeCount);
-
-    private sealed record WorkspaceListCommandResult(
-        string RegistryFilePath,
-        IReadOnlyList<WorkspaceRegistration> Workspaces);
 
     private static void LogWatch(string message)
     {
@@ -606,8 +467,6 @@ internal sealed class ArgumentParser
 }
 
 internal sealed class CliException(string message) : Exception(message);
-
-internal sealed record WorkspaceRemoveCommandResult(string Workspace, bool Removed);
 
 internal sealed class ConsoleCancelHandler : IDisposable
 {

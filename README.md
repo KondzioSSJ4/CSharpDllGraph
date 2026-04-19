@@ -70,11 +70,10 @@ dotnet run --project src/CSharpDllGraph.Cli -- query list_dependencies --workspa
 
 | Command | Description |
 |---|---|
-| `build <path> --name <name>` | Build a graph from a solution |
-| `update <path> --name <name>` | Rebuild an existing graph |
-| `watch <path> --name <name>` | Watch for changes and rebuild incrementally |
-| `workspace list` | List all registered workspaces |
-| `query <tool> --workspace <name>` | Run a query against a workspace |
+| `build <path>` | Build a graph from a solution |
+| `update <path>` | Rebuild an existing graph |
+| `watch <path>` | Watch for changes and rebuild incrementally |
+| `query <tool> --workspace <path>` | Run a query against a workspace |
 
 Show all options:
 
@@ -203,13 +202,6 @@ dotnet publish src/CSharpDllGraph.Mcp -c Release -o .artifacts/mcp
 ```
 
 Then point your MCP client config to the published executable.
-
-## Registry locations
-
-Workspace registrations are stored at:
-
-- **Windows:** `%APPDATA%\CSharpDllGraph\workspaces.json`
-- **Linux/macOS:** `~/.config/csharpdllgraph/workspaces.json`
 
 ## Recommended `.gitignore` patterns
 

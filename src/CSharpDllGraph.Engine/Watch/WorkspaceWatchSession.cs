@@ -38,7 +38,7 @@ public sealed class WorkspaceWatchSession : IDisposable
     private readonly Action<string> _log;
     private readonly Channel<IReadOnlyList<string>> _batches;
     private readonly List<FileSystemWatcher> _watchers;
-    private readonly string _solutionPath;
+    private readonly string? _solutionPath;
     private readonly string _workspaceRootPath;
     private readonly string _graphPath;
     private readonly int _debounceMs;
@@ -50,13 +50,13 @@ public sealed class WorkspaceWatchSession : IDisposable
 
     public WorkspaceWatchSession(
         string workspaceRootPath,
-        string solutionPath,
+        string? solutionPath,
         string graphPath,
         int debounceMs,
         Action<string> log)
     {
         _workspaceRootPath = Path.GetFullPath(workspaceRootPath);
-        _solutionPath = Path.GetFullPath(solutionPath);
+        _solutionPath = string.IsNullOrWhiteSpace(solutionPath) ? null : Path.GetFullPath(solutionPath);
         _graphPath = Path.GetFullPath(graphPath);
         _debounceMs = debounceMs;
         _log = log ?? throw new ArgumentNullException(nameof(log));
@@ -137,6 +137,11 @@ public sealed class WorkspaceWatchSession : IDisposable
     {
         yield return _workspaceRootPath;
 
+        if (_solutionPath is null)
+        {
+            yield break;
+        }
+
         var solutionDirectory = Path.GetDirectoryName(_solutionPath);
         if (!string.IsNullOrWhiteSpace(solutionDirectory)
             && !IsDescendantOf(solutionDirectory, _workspaceRootPath)
@@ -160,7 +165,10 @@ public sealed class WorkspaceWatchSession : IDisposable
     private void OnError(object sender, ErrorEventArgs args)
     {
         _log($"Watcher error: {args.GetException().Message}");
-        QueuePath(_solutionPath);
+        if (_solutionPath is not null)
+        {
+            QueuePath(_solutionPath);
+        }
     }
 
     private void QueuePath(string? path)
@@ -226,7 +234,7 @@ public sealed class WorkspaceWatchSession : IDisposable
 
     private bool ShouldTrackPath(string fullPath)
     {
-        if (string.Equals(fullPath, _solutionPath, StringComparison.OrdinalIgnoreCase))
+        if (_solutionPath is not null && string.Equals(fullPath, _solutionPath, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }

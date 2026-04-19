@@ -37,12 +37,13 @@ public sealed class WorkspaceAutoManager : IHostedService, IDisposable
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var resolvedSolutionPath = ResolveSolutionPath(_config);
         var store = new JsonWorkspaceStore(_config.GraphPath);
         var manifestPath = Path.Combine(_config.GraphPath, ManifestFileName);
+        string? resolvedSolutionPath;
 
         if (!File.Exists(manifestPath))
         {
+            resolvedSolutionPath = ResolveSolutionPath(_config);
             _logger.LogInformation(
                 "Graph manifest missing at '{GraphPath}'. Running initial build with {ProviderCount} provider(s).",
                 manifestPath,
@@ -56,6 +57,7 @@ public sealed class WorkspaceAutoManager : IHostedService, IDisposable
         }
         else
         {
+            resolvedSolutionPath = TryResolveSolutionPath(_config);
             _logger.LogInformation("Using existing graph manifest at '{GraphPath}'.", manifestPath);
             await TryExportHtmlAsync(cancellationToken);
         }
@@ -106,11 +108,11 @@ public sealed class WorkspaceAutoManager : IHostedService, IDisposable
 
     private async Task RunWatchLoopAsync(
         JsonWorkspaceStore store,
-        string solutionPath,
+        string? solutionPath,
         CancellationToken cancellationToken)
     {
         var session = _watchSession;
-        if (session is null)
+        if (session is null || string.IsNullOrWhiteSpace(solutionPath))
         {
             return;
         }
@@ -207,5 +209,21 @@ public sealed class WorkspaceAutoManager : IHostedService, IDisposable
             0 => throw new InvalidOperationException($"No .sln or .slnx file found under '{config.RootPath}'."),
             _ => throw new InvalidOperationException($"Multiple solution files found under '{config.RootPath}'. Set WorkspaceConfig.SolutionPath.")
         };
+    }
+
+    private static string? TryResolveSolutionPath(WorkspaceConfig config)
+    {
+        if (!string.IsNullOrWhiteSpace(config.SolutionPath))
+        {
+            var explicitPath = Path.GetFullPath(config.SolutionPath);
+            return File.Exists(explicitPath) ? explicitPath : null;
+        }
+
+        var solutions = Directory
+            .EnumerateFiles(config.RootPath, "*.sln*", SearchOption.TopDirectoryOnly)
+            .OrderBy(static path => path, StringComparer.Ordinal)
+            .ToArray();
+
+        return solutions.Length == 1 ? Path.GetFullPath(solutions[0]) : null;
     }
 }

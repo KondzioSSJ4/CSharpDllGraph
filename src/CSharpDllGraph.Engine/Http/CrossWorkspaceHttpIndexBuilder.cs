@@ -6,18 +6,18 @@ namespace CSharpDllGraph.Engine.Http;
 
 public sealed class CrossWorkspaceHttpIndexBuilder : ICrossWorkspaceHttpIndexBuilder
 {
-    private readonly IWorkspaceRegistry _workspaceRegistry;
+    private readonly IReadOnlyList<WorkspaceRegistration> _registrations;
 
-    public CrossWorkspaceHttpIndexBuilder(IWorkspaceRegistry workspaceRegistry)
+    public CrossWorkspaceHttpIndexBuilder(IReadOnlyList<WorkspaceRegistration> registrations)
     {
-        _workspaceRegistry = workspaceRegistry ?? throw new ArgumentNullException(nameof(workspaceRegistry));
+        _registrations = registrations ?? throw new ArgumentNullException(nameof(registrations));
     }
 
     public async Task<CrossWorkspaceHttpIndex> BuildAsync(CancellationToken cancellationToken = default)
     {
         var entries = new List<CrossWorkspaceHttpIndexEntry>();
 
-        foreach (var registration in _workspaceRegistry.List())
+        foreach (var registration in _registrations)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
